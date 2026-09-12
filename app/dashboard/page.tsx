@@ -420,10 +420,19 @@ export default function Home() {
                 <span className="eyebrow">WORKSPACE PREFERENCES</span>
                 <h2>Settings</h2>
                 <p>Configure your workspace settings here.</p>
-                <div style={{marginTop:'20px', display:'flex', flexDirection:'column', gap:'12px'}}>
-                  <label style={{display:'flex', justifyContent:'space-between', alignItems:'center'}}><span>Dark Mode</span><input type="checkbox" checked={isDarkMode} onChange={() => setIsDarkMode(!isDarkMode)} /></label>
-                  <label style={{display:'flex', justifyContent:'space-between', alignItems:'center'}}><span>Email Notifications</span><input type="checkbox" defaultChecked /></label>
-                  <label style={{display:'flex', justifyContent:'space-between', alignItems:'center'}}><span>Weekly Summary Report</span><input type="checkbox" defaultChecked /></label>
+                <div style={{marginTop:'20px', display:'flex', flexDirection:'column'}}>
+                  <label className="setting-row">
+                    <span>Dark Mode<small>Switch between light and metallic dark themes</small></span>
+                    <div className="toggle-switch"><input type="checkbox" checked={isDarkMode} onChange={() => setIsDarkMode(!isDarkMode)} /><span className="toggle-slider"></span></div>
+                  </label>
+                  <label className="setting-row">
+                    <span>Email Notifications<small>Receive alerts for important onboarding updates</small></span>
+                    <div className="toggle-switch"><input type="checkbox" defaultChecked /><span className="toggle-slider"></span></div>
+                  </label>
+                  <label className="setting-row">
+                    <span>Weekly Summary Report<small>Get a Friday digest of team performance</small></span>
+                    <div className="toggle-switch"><input type="checkbox" defaultChecked /><span className="toggle-slider"></span></div>
+                  </label>
                 </div>
                 <div className="modal-actions" style={{marginTop:'24px'}}>
                   <button className="primary-button" style={{width:'100%'}} onClick={() => {notify("Settings saved"); setActiveModal(null);}}>Save Changes</button>
