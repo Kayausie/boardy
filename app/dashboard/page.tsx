@@ -75,7 +75,13 @@ export default function Home() {
   const [selectedId, setSelectedId] = useState(1); 
   const [query, setQuery] = useState(""); 
   const [tab, setTab] = useState<"Overview" | "Tasks" | "Activity" | "AI Buddy">("Overview"); 
-  const [modal, setModal] = useState(false); 
+  const [modal, setModal] = useState(false);
+  const [currentView, setCurrentView] = useState<"grid" | "people" | "tasks" | "chart">("people");
+  const [activeModal, setActiveModal] = useState<"settings" | "how-it-works" | null>(null);
+  const [showNotif, setShowNotif] = useState(false);
+  const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const [showSignalsMenu, setShowSignalsMenu] = useState(false);
+  
   const [toast, setToast] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
   const [sortAsc, setSortAsc] = useState(true);
@@ -158,6 +164,31 @@ export default function Home() {
     }
   };
 
+  const handleAskDetails = async () => {
+    setTab("AI Buddy");
+    const queryMsg = "Please explain the details behind the current AI Performance Estimate (Score and Status). What factors contributed to this?";
+    const newMessages = [...chatMessages, { role: "user", content: queryMsg }];
+    setChatMessages(newMessages);
+    setIsGenerating(true);
+    try {
+      const res = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ messages: newMessages, userId: selected.id })
+      });
+      const data = await res.json();
+      if (data.success) {
+        setChatMessages([...newMessages, { role: "assistant", content: data.text }]);
+      } else {
+        notify("Gemini Error: " + data.error);
+      }
+    } catch (e) {
+      notify("Failed to connect to AI Buddy.");
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
   const handleAddStaff = async () => {
     if (!newStaff.name) { notify("Name is required"); return; }
     try {
@@ -224,9 +255,11 @@ export default function Home() {
   };
 
   return <main className="app-shell">
-    <aside className="side-rail"><div className="brand-mark">P</div><nav className="rail-nav" aria-label="Primary navigation"><button className="rail-item"><Icon name="grid" /></button><button className="rail-item active"><Icon name="people" /></button><button className="rail-item"><Icon name="check" /></button><button className="rail-item"><Icon name="chart" /></button></nav><button className="rail-item rail-bottom" onClick={() => setIsDarkMode(!isDarkMode)}><Icon name={isDarkMode ? "sun" : "moon"} /></button><button className="rail-item" style={{marginBottom:'10px'}}><Icon name="settings" /></button></aside>
-    <section className="staff-panel">
-      <div className="panel-heading"><div><span className="eyebrow">WORKSPACE</span><h1>Probation</h1></div><button className="avatar user-avatar" onClick={() => notify("User profile clicked")}>KT</button></div>
+    <aside className="side-rail"><div className="brand-mark">P</div><nav className="rail-nav" aria-label="Primary navigation"><button className={`rail-item ${currentView === 'grid' ? 'active' : ''}`} onClick={() => setCurrentView('grid')}><Icon name="grid" /></button><button className={`rail-item ${currentView === 'people' ? 'active' : ''}`} onClick={() => setCurrentView('people')}><Icon name="people" /></button><button className={`rail-item ${currentView === 'tasks' ? 'active' : ''}`} onClick={() => setCurrentView('tasks')}><Icon name="check" /></button><button className={`rail-item ${currentView === 'chart' ? 'active' : ''}`} onClick={() => setCurrentView('chart')}><Icon name="chart" /></button></nav><button className="rail-item rail-bottom" onClick={() => setIsDarkMode(!isDarkMode)}><Icon name={isDarkMode ? "sun" : "moon"} /></button><button className="rail-item" style={{marginBottom:'10px'}} onClick={() => setActiveModal("settings")}><Icon name="settings" /></button></aside>
+    {currentView === 'people' && (
+      <>
+      <section className="staff-panel">
+      <div className="panel-heading"><div><span className="eyebrow">WORKSPACE</span><h1>Probation</h1></div><button className="avatar user-avatar" onClick={() => setActiveModal("settings")}>KT</button></div>
       <div className="staff-toolbar"><label className="search-field"><Icon name="search" size={16}/><input value={query} onChange={e => setQuery(e.target.value)} placeholder="Search people" /></label><button className="icon-button" onClick={() => {setSortAsc(!sortAsc); notify(sortAsc ? "Sorted Z-A" : "Sorted A-Z")}}><Icon name="filter" size={17}/></button></div>
       <div className="staff-subheader"><span>ON PROBATION</span><span>{people.length} people</span></div>
       <div className="staff-list">
@@ -248,24 +281,57 @@ export default function Home() {
       <header className="topbar">
         <div className="crumb"><span>People</span><span>/</span><strong>Probation review</strong></div>
         <div className="top-actions">
-          <div style={{display:'flex',borderRadius:'8px',overflow:'hidden',border:'1px solid #5e55ca',fontSize:'11px',fontWeight:'bold'}}>
-            <button onClick={() => setViewRole("Manager")} style={{padding:'6px 12px',border:'0',background: viewRole === 'Manager' ? '#5e55ca' : 'transparent',color: viewRole === 'Manager' ? '#fff' : '#5e55ca',cursor:'pointer'}}>Manager</button>
-            <button onClick={() => setViewRole("HR")} style={{padding:'6px 12px',border:'0',borderLeft:'1px solid #5e55ca',background: viewRole === 'HR' ? '#5e55ca' : 'transparent',color: viewRole === 'HR' ? '#fff' : '#5e55ca',cursor:'pointer'}}>HR</button>
+          <div style={{display:'flex',borderRadius:'8px',overflow:'hidden',border:'1px solid var(--brand-color)',fontSize:'11px',fontWeight:'bold'}}>
+            <button onClick={() => setViewRole("Manager")} style={{padding:'6px 12px',border:'0',background: viewRole === 'Manager' ? 'var(--brand-color)' : 'transparent',color: viewRole === 'Manager' ? '#fff' : 'var(--brand-color)',cursor:'pointer'}}>Manager</button>
+            <button onClick={() => setViewRole("HR")} style={{padding:'6px 12px',border:'0',borderLeft:'1px solid var(--brand-color)',background: viewRole === 'HR' ? 'var(--brand-color)' : 'transparent',color: viewRole === 'HR' ? '#fff' : 'var(--brand-color)',cursor:'pointer'}}>HR</button>
           </div>
-          <button onClick={handleSimulateWebhook} style={{border:'1px dashed #5e55ca',background:'transparent',color:'#5e55ca',padding:'8px 12px',borderRadius:'8px',fontSize:'12px',fontWeight:'bold',cursor:'pointer',display:'flex',gap:'6px',alignItems:'center'}}>
+          <button onClick={handleSimulateWebhook} style={{border:'1px dashed var(--brand-color)',background:'transparent',color:'var(--brand-color)',padding:'8px 12px',borderRadius:'8px',fontSize:'12px',fontWeight:'bold',cursor:'pointer',display:'flex',gap:'6px',alignItems:'center'}}>
             <Icon name="zap" size={14}/> Simulate Webhook
           </button>
-          <button onClick={handleGenerateSummary} disabled={isGenerating} style={{border:'0',background:'#5e55ca',color:'#fff',padding:'8px 12px',borderRadius:'8px',fontSize:'12px',fontWeight:'bold',cursor:'pointer'}}>
+          <button onClick={handleGenerateSummary} disabled={isGenerating} style={{border:'0',background:'var(--brand-color)',color:'#fff',padding:'8px 12px',borderRadius:'8px',fontSize:'12px',fontWeight:'bold',cursor:'pointer'}}>
             {isGenerating ? "Generating..." : `${viewRole} Summary`}
           </button>
-          <button className="icon-button notification" onClick={() => notify("No new notifications")}><Icon name="bell" size={18}/><i/></button>
-          <button className="avatar profile-avatar" onClick={() => notify("Settings menu opened")}>KT</button>
+          <div style={{position:'relative'}}>
+            <button className="icon-button notification" onClick={() => setShowNotif(!showNotif)}><Icon name="bell" size={18}/><i/></button>
+            <AnimatePresence>
+              {showNotif && (
+                <motion.div initial={{opacity:0, y:5}} animate={{opacity:1, y:0}} exit={{opacity:0, y:5}} className="dropdown-menu" style={{position:'absolute', top:'100%', right:0, marginTop:'8px', background:'#fff', border:'1px solid #e2e8f0', borderRadius:'12px', width:'280px', boxShadow:'0 10px 25px rgba(0,0,0,0.05)', zIndex:100}}>
+                  <div style={{padding:'12px 16px', borderBottom:'1px solid #e2e8f0', fontWeight:'bold', fontSize:'13px'}}>Recent Activity</div>
+                  <div style={{maxHeight:'240px', overflowY:'auto', padding:'8px'}}>
+                    {dbEvents.slice(0, 3).map((ev: any, i) => (
+                      <div key={i} style={{padding:'8px', fontSize:'12px', color:'#475569', borderBottom: i === 2 ? 'none' : '1px solid #f1f5f9'}}>
+                        <strong style={{color:'#0f172a', display:'block'}}>{ev.description}</strong>
+                        {new Date(ev.timestamp).toLocaleString()}
+                      </div>
+                    ))}
+                    {dbEvents.length === 0 && <div style={{padding:'12px', fontSize:'12px', color:'#64748b'}}>No recent activity.</div>}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+          <button className="avatar profile-avatar" onClick={() => setActiveModal("settings")}>KT</button>
         </div>
       </header>
       
       <div className="content-wrap">
         <motion.div key={selected.id} initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
-          <section className="profile-header"><div className="profile-title"><span className="large-avatar" style={{backgroundColor:selected.color}}>{selected.initials}</span><div><div className="title-row"><h2>{selected.name}</h2><span className={`status-pill ${ai.tone}`}>{selected.status}</span></div><p>{selected.role} <span>·</span> {selected.department}</p></div></div><button className="more-button" onClick={() => notify("Review actions are ready to be configured.")}><Icon name="dots" size={20}/></button></section>
+          <section className="profile-header">
+            <div className="profile-title"><span className="large-avatar" style={{backgroundColor:selected.color}}>{selected.initials}</span><div><div className="title-row"><h2>{selected.name}</h2><span className={`status-pill ${ai.tone}`}>{selected.status}</span></div><p>{selected.role} <span>·</span> {selected.department}</p></div></div>
+            <div style={{position:'relative'}}>
+              <button className="more-button" onClick={() => setShowProfileMenu(!showProfileMenu)}><Icon name="dots" size={20}/></button>
+              <AnimatePresence>
+                {showProfileMenu && (
+                  <motion.div initial={{opacity:0, scale:0.95}} animate={{opacity:1, scale:1}} exit={{opacity:0, scale:0.95}} className="dropdown-menu" style={{position:'absolute', top:'100%', right:0, marginTop:'4px', background:'#fff', border:'1px solid #e2e8f0', borderRadius:'8px', minWidth:'160px', boxShadow:'0 4px 12px rgba(0,0,0,0.1)', zIndex:100, padding:'4px', display:'flex', flexDirection:'column'}}>
+                    <button style={{padding:'8px 12px', textAlign:'left', fontSize:'13px', background:'transparent', border:'0', cursor:'pointer', borderRadius:'4px'}} onClick={() => {notify("Edit profile action"); setShowProfileMenu(false);}}>Edit Profile</button>
+                    <button style={{padding:'8px 12px', textAlign:'left', fontSize:'13px', background:'transparent', border:'0', cursor:'pointer', borderRadius:'4px'}} onClick={() => {notify("Assign new task"); setShowProfileMenu(false);}}>Assign Task</button>
+                    <div style={{height:'1px', background:'#e2e8f0', margin:'4px 0'}}/>
+                    <button style={{padding:'8px 12px', textAlign:'left', fontSize:'13px', background:'transparent', border:'0', cursor:'pointer', borderRadius:'4px', color:'#ef4444'}} onClick={() => {notify("Suspended user"); setShowProfileMenu(false);}}>Suspend User</button>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          </section>
           <section className="probation-banner"><div className="calendar-icon"><Icon name="calendar" size={18}/></div><div className="probation-copy"><span>PROBATION PERIOD</span><strong>{selected.remaining} days remaining</strong><small>Started {selected.start} · Review due 10 Oct 2024</small></div><div className="progress-summary"><div><span>Progress</span><strong>{progress}%</strong></div><div className="progress-track"><motion.i initial={{width:0}} animate={{width:`${progress}%`}} transition={{duration:0.8}}/></div></div></section>
         </motion.div>
 
@@ -279,7 +345,16 @@ export default function Home() {
         
         <AnimatePresence mode="wait">
           <motion.div key={tab} initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -10 }} transition={{ duration: 0.2 }}>
-            {tab === "Overview" && <><section className="section-topline"><div><span className="eyebrow">AI PERFORMANCE ESTIMATE</span><h3>Performance snapshot</h3></div><button className="text-button" onClick={() => notify("The estimate refreshes as new activity arrives.")}>How it works <Icon name="arrow" size={15}/></button></section><section className="estimate-grid"><article className={`score-card ${ai.tone}`}><div className="score-card-head"><span>Current estimate</span><Icon name="sparkles" size={18}/></div><div className="score-content"><div className="score-ring" style={{"--score":`${selected.score * 3.6}deg`} as React.CSSProperties}><div><strong>{selected.score}</strong><span>/100</span></div></div><div><h4>{selected.status}</h4><p>{ai.copy}</p></div></div><div className="score-foot"><span>Based on tasks, activity & feedback</span><button onClick={() => notify("Assessment details opened.")}>View details <Icon name="arrow" size={14}/></button></div></article><article className="signals-card"><div className="card-title"><div><span className="eyebrow">KEY SIGNALS</span><h3>What’s driving this</h3></div><button className="more-button"><Icon name="dots" size={18}/></button></div><div className="signals"><Signal icon="check" color="purple" title={`${selected.tasks.filter(t => t.progress === 100).length + 4} tasks completed`} body="on or ahead of schedule" impact="+12"/><Signal icon="message" color="blue" title="Responsive collaboration" body="Avg. reply time: 1h 14m" impact="+8"/><Signal icon="clipboard" color="orange" title="Growth opportunity" body="Documentation consistency" impact="—"/></div></article></section><section className="section-topline task-heading"><div><span className="eyebrow">CURRENT WORK</span><h3>Assigned tasks</h3></div><button className="text-button" onClick={() => setTab("Tasks")}>View all tasks <Icon name="arrow" size={15}/></button></section><section className="tasks-card">{selected.tasks.map(t => <TaskRow task={t} key={t.title}/>)}</section><section className="section-topline activity-heading"><div><span className="eyebrow">RECENT ACTIVITY</span><h3>Latest updates</h3></div><button className="text-button" onClick={() => setTab("Activity")}>View activity <Icon name="arrow" size={15}/></button></section><section className="activity-card">{selected.activities.slice(0,3).map((a,i) => <ActivityRow activity={a} key={i}/>)}</section></>}
+            {tab === "Overview" && <><section className="section-topline"><div><span className="eyebrow">AI PERFORMANCE ESTIMATE</span><h3>Performance snapshot</h3></div><button className="text-button" onClick={() => setActiveModal("how-it-works")}>How it works <Icon name="arrow" size={15}/></button></section><section className="estimate-grid"><article className={`score-card ${ai.tone}`}><div className="score-card-head"><span>Current estimate</span><Icon name="sparkles" size={18}/></div><div className="score-content"><div className="score-ring" style={{"--score":`${selected.score * 3.6}deg`} as React.CSSProperties}><div><strong>{selected.score}</strong><span>/100</span></div></div><div><h4>{selected.status}</h4><p>{ai.copy}</p></div></div><div className="score-foot"><span>Based on tasks, activity & feedback</span><button onClick={handleAskDetails}>View details <Icon name="arrow" size={14}/></button></div></article><article className="signals-card"><div className="card-title"><div><span className="eyebrow">KEY SIGNALS</span><h3>What’s driving this</h3></div><div style={{position:'relative'}}><button className="more-button" onClick={() => setShowSignalsMenu(!showSignalsMenu)}><Icon name="dots" size={18}/></button>
+              <AnimatePresence>
+                {showSignalsMenu && (
+                  <motion.div initial={{opacity:0, scale:0.95}} animate={{opacity:1, scale:1}} exit={{opacity:0, scale:0.95}} className="dropdown-menu" style={{position:'absolute', top:'100%', right:0, marginTop:'4px', background:'#fff', border:'1px solid #e2e8f0', borderRadius:'8px', minWidth:'180px', boxShadow:'0 4px 12px rgba(0,0,0,0.1)', zIndex:100, padding:'4px', display:'flex', flexDirection:'column'}}>
+                    <button style={{padding:'8px 12px', textAlign:'left', fontSize:'13px', background:'transparent', border:'0', cursor:'pointer', borderRadius:'4px'}} onClick={() => {notify("Recalculating signals based on latest data..."); setShowSignalsMenu(false);}}>Recalculate Signals</button>
+                    <button style={{padding:'8px 12px', textAlign:'left', fontSize:'13px', background:'transparent', border:'0', cursor:'pointer', borderRadius:'4px'}} onClick={() => {notify("Exported signals to CSV"); setShowSignalsMenu(false);}}>Export to CSV</button>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div></div><div className="signals"><Signal icon="check" color="purple" title={`${selected.tasks.filter(t => t.progress === 100).length + 4} tasks completed`} body="on or ahead of schedule" impact="+12"/><Signal icon="message" color="blue" title="Responsive collaboration" body="Avg. reply time: 1h 14m" impact="+8"/><Signal icon="clipboard" color="orange" title="Growth opportunity" body="Documentation consistency" impact="—"/></div></article></section><section className="section-topline task-heading"><div><span className="eyebrow">CURRENT WORK</span><h3>Assigned tasks</h3></div><button className="text-button" onClick={() => setTab("Tasks")}>View all tasks <Icon name="arrow" size={15}/></button></section><section className="tasks-card">{selected.tasks.map(t => <TaskRow task={t} key={t.title}/>)}</section><section className="section-topline activity-heading"><div><span className="eyebrow">RECENT ACTIVITY</span><h3>Latest updates</h3></div><button className="text-button" onClick={() => setTab("Activity")}>View activity <Icon name="arrow" size={15}/></button></section><section className="activity-card">{selected.activities.slice(0,3).map((a,i) => <ActivityRow activity={a} key={i}/>)}</section></>}
             
             {tab === "Tasks" && <section className="tasks-card full-card">{selected.tasks.length === 0 ? <div style={{padding:'20px',color:'#777'}}>No tasks yet.</div> : selected.tasks.map(t => <TaskRow task={t} key={t.title}/>)}</section>}
             
@@ -293,8 +368,8 @@ export default function Home() {
               <section className="tasks-card full-card" style={{padding:'20px', display:'flex', flexDirection:'column', gap:'16px', minHeight:'400px'}}>
                 <div style={{flex:1, overflowY:'auto', display:'flex', flexDirection:'column', gap:'16px', paddingRight:'10px'}}>
                   {chatMessages.map((msg, i) => (
-                    <motion.div initial={{opacity:0, y:5}} animate={{opacity:1, y:0}} key={i} style={{alignSelf: msg.role === 'user' ? 'flex-end' : 'flex-start', background: msg.role === 'user' ? '#f1efff' : '#f7f7fb', padding:'12px 16px', borderRadius:'10px', maxWidth:'85%', fontSize:'13px', lineHeight:'1.6', color:'#424459', border:'1px solid #efeff4'}}>
-                      <strong style={{display:'block', marginBottom:'6px', color: msg.role === 'user' ? '#6259cc' : '#333'}}>{msg.role === 'user' ? 'You' : 'AI Assistant'}</strong>
+                    <motion.div initial={{opacity:0, y:5}} animate={{opacity:1, y:0}} key={i} style={{alignSelf: msg.role === 'user' ? 'flex-end' : 'flex-start', background: msg.role === 'user' ? 'var(--hover-bg)' : 'var(--input-bg)', padding:'12px 16px', borderRadius:'10px', maxWidth:'85%', fontSize:'13px', lineHeight:'1.6', color:'var(--ink)', border:'1px solid var(--input-border)'}}>
+                      <strong style={{display:'block', marginBottom:'6px', color: msg.role === 'user' ? 'var(--brand-color)' : 'var(--ink)'}}>{msg.role === 'user' ? 'You' : 'AI Assistant'}</strong>
                       {msg.role === 'assistant' ? (
                         <ReactMarkdown components={{
                           p: ({node, ...props}) => <p style={{margin: '0 0 8px 0'}} {...props} />,
@@ -317,7 +392,7 @@ export default function Home() {
                 </div>
                 <div style={{display:'flex', gap:'8px', marginTop:'auto'}}>
                   <input type="text" value={messageInput} onChange={e => setMessageInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleSendMessage()} disabled={isGenerating} placeholder="Ask something..." style={{flex:1, padding:'12px', borderRadius:'8px', border:'1px solid #dedee8', fontSize:'13px'}} />
-                  <button onClick={handleSendMessage} disabled={isGenerating} style={{background:'#6259cc', color:'#fff', border:'0', padding:'0 20px', borderRadius:'8px', fontSize:'13px', fontWeight:'bold', cursor: isGenerating ? 'not-allowed' : 'pointer'}}>Send</button>
+                  <button onClick={handleSendMessage} disabled={isGenerating} style={{background:'var(--brand-color)', color:'#fff', border:'0', padding:'0 20px', borderRadius:'8px', fontSize:'13px', fontWeight:'bold', cursor: isGenerating ? 'not-allowed' : 'pointer'}}>Send</button>
                 </div>
               </section>
             )}
@@ -325,7 +400,111 @@ export default function Home() {
         </AnimatePresence>
       </div>
     </section>
+    </>
+    )}
+
+    {currentView === 'grid' && (
+      <section style={{flex: 1, padding: '40px', overflowY: 'auto'}}>
+        <div className="section-topline">
+          <div><span className="eyebrow">OVERVIEW</span><h1 style={{fontSize:'24px',margin:0,color:'var(--ink)'}}>Team Grid</h1></div>
+        </div>
+        <div className="grid-view" style={{marginTop:'24px'}}>
+          {people.map(p => (
+            <div key={p.id} className="grid-card" onClick={() => {setSelectedId(p.id); setCurrentView('people');}}>
+              <div style={{display:'flex', justifyContent:'space-between', marginBottom:'16px'}}>
+                <span className="avatar" style={{backgroundColor:p.color}}>{p.initials}</span>
+                <span className={`status-pill ${estimation[p.status]?.tone || 'support'}`}>{p.status}</span>
+              </div>
+              <h3 style={{margin:'0 0 4px'}}>{p.name}</h3>
+              <p style={{margin:0, fontSize:'12px', color:'var(--muted)'}}>{p.role}</p>
+              <div style={{marginTop:'20px', display:'flex', justifyContent:'space-between', fontSize:'11px', color:'var(--muted)', borderTop:'1px solid var(--panel-border)', paddingTop:'12px'}}>
+                <span>{p.remaining} days remaining</span>
+                <strong>{p.score}/100</strong>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+    )}
+
+    {currentView === 'tasks' && (
+      <section style={{flex: 1, padding: '40px', overflowY: 'auto'}}>
+        <div className="section-topline">
+          <div><span className="eyebrow">ALL TASKS</span><h1 style={{fontSize:'24px',margin:0,color:'var(--ink)'}}>Consolidated Backlog</h1></div>
+        </div>
+        <div className="tasks-card full-card" style={{marginTop:'24px', maxWidth:'900px'}}>
+          {people.flatMap(p => p.tasks).map((t, i) => <TaskRow task={t} key={i}/>)}
+        </div>
+      </section>
+    )}
+
+    {currentView === 'chart' && (
+      <section style={{flex: 1, padding: '40px', overflowY: 'auto'}}>
+        <div className="section-topline">
+          <div><span className="eyebrow">REPORTS</span><h1 style={{fontSize:'24px',margin:0,color:'var(--ink)'}}>AI Performance Stats</h1></div>
+        </div>
+        <div className="chart-view" style={{marginTop:'24px', maxWidth:'1000px'}}>
+          <div className="stat-card">
+            <div className="stat-label">Avg Team Score</div>
+            <div className="stat-value">{Math.round(people.reduce((sum, p) => sum + p.score, 0) / (people.length || 1))}</div>
+            <div style={{fontSize:'12px', color:'var(--muted)'}}>Out of 100</div>
+          </div>
+          <div className="stat-card">
+            <div className="stat-label">Above & Beyond</div>
+            <div className="stat-value">{Math.round((people.filter(p => p.status === 'Above & beyond').length / (people.length || 1)) * 100)}%</div>
+            <div style={{fontSize:'12px', color:'var(--muted)'}}>Of all employees</div>
+          </div>
+          <div className="stat-card">
+            <div className="stat-label">Total Events</div>
+            <div className="stat-value">{dbEvents.length > 0 ? dbEvents.length + 42 : 42}</div>
+            <div style={{fontSize:'12px', color:'var(--muted)'}}>Captured silently</div>
+          </div>
+        </div>
+      </section>
+    )}
     
+    <AnimatePresence>
+      {activeModal && (
+        <motion.div initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} className="modal-backdrop" onMouseDown={() => setActiveModal(null)} style={{zIndex:200}}>
+          <motion.div initial={{scale:0.95, y:10}} animate={{scale:1, y:0}} exit={{scale:0.95, y:10}} className="modal" onMouseDown={e=>e.stopPropagation()} style={{maxWidth: activeModal === 'settings' ? '400px' : '500px'}}>
+            <button className="modal-close" onClick={() => setActiveModal(null)}>×</button>
+            {activeModal === 'settings' ? (
+              <>
+                <span className="eyebrow">WORKSPACE PREFERENCES</span>
+                <h2>Settings</h2>
+                <p>Configure your workspace settings here.</p>
+                <div style={{marginTop:'20px', display:'flex', flexDirection:'column', gap:'12px'}}>
+                  <label style={{display:'flex', justifyContent:'space-between', alignItems:'center'}}><span>Dark Mode</span><input type="checkbox" checked={isDarkMode} onChange={() => setIsDarkMode(!isDarkMode)} /></label>
+                  <label style={{display:'flex', justifyContent:'space-between', alignItems:'center'}}><span>Email Notifications</span><input type="checkbox" defaultChecked /></label>
+                  <label style={{display:'flex', justifyContent:'space-between', alignItems:'center'}}><span>Weekly Summary Report</span><input type="checkbox" defaultChecked /></label>
+                </div>
+                <div className="modal-actions" style={{marginTop:'24px'}}>
+                  <button className="primary-button" style={{width:'100%'}} onClick={() => {notify("Settings saved"); setActiveModal(null);}}>Save Changes</button>
+                </div>
+              </>
+            ) : (
+              <>
+                <span className="eyebrow">AI ESTIMATE LOGIC</span>
+                <h2>How AI Scoring Works</h2>
+                <p>Boardy uses an event-driven architecture to evaluate performance silently without intrusive surveillance.</p>
+                <div style={{background:'#f8fafc', padding:'16px', borderRadius:'8px', marginTop:'16px', fontSize:'13px', lineHeight:'1.6', color:'#334155'}}>
+                  <ul style={{paddingLeft:'16px', display:'flex', flexDirection:'column', gap:'8px'}}>
+                    <li><strong>GitHub Commits & PRs:</strong> High impact on technical scores. (+5 points per event)</li>
+                    <li><strong>Jira Tasks:</strong> Tracks velocity and blocker resolution. (+8 points for completion)</li>
+                    <li><strong>MS 365 Documents:</strong> Indicates planning and documentation effort. (+3 points)</li>
+                    <li><strong>Figma & Slack:</strong> Measures collaboration and responsiveness. (+2 to +4 points)</li>
+                  </ul>
+                </div>
+                <div className="modal-actions" style={{marginTop:'24px'}}>
+                  <button className="primary-button" style={{width:'100%'}} onClick={() => setActiveModal(null)}>Got it</button>
+                </div>
+              </>
+            )}
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+
     <AnimatePresence>
       {modal && (
         <motion.div initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} className="modal-backdrop" onMouseDown={() => setModal(false)}>

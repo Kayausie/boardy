@@ -27,14 +27,14 @@ export default function LandingPage() {
         transition: "all 0.3s ease",
       }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <div style={{ width: 32, height: 32, borderRadius: 10, background: "linear-gradient(135deg,#8c80ff,#7062e9)", display: "grid", placeItems: "center", color: "#fff", fontWeight: 800, fontSize: 16 }}>B</div>
+          <div style={{ width: 32, height: 32, borderRadius: 10, background: "linear-gradient(135deg,#a68a6b,#8c7355)", display: "grid", placeItems: "center", color: "#fff", fontWeight: 800, fontSize: 16 }}>B</div>
           <span style={{ fontWeight: 700, fontSize: 18, letterSpacing: -0.5 }}>Boardy</span>
         </div>
         <div style={{ display: "flex", gap: 28, alignItems: "center", fontSize: 13 }}>
           <a href="#how" style={{ color: "#94a3b8", textDecoration: "none" }}>How It Works</a>
           <a href="#features" style={{ color: "#94a3b8", textDecoration: "none" }}>Features</a>
           <a href="#why" style={{ color: "#94a3b8", textDecoration: "none" }}>Why Boardy</a>
-          <Link href="/dashboard" style={{ background: "linear-gradient(135deg,#8c80ff,#6259cc)", color: "#fff", padding: "8px 20px", borderRadius: 8, textDecoration: "none", fontWeight: 600, fontSize: 13 }}>
+          <Link href="/dashboard" style={{ background: "linear-gradient(135deg,#a68a6b,#8c7355)", color: "#fff", padding: "8px 20px", borderRadius: 8, textDecoration: "none", fontWeight: 600, fontSize: 13 }}>
             Open Dashboard →
           </Link>
         </div>
@@ -46,16 +46,16 @@ export default function LandingPage() {
         textAlign: "center", padding: "120px 24px 80px", position: "relative", overflow: "hidden",
       }}>
         {/* Gradient Orbs */}
-        <div style={{ position: "absolute", width: 600, height: 600, borderRadius: "50%", background: "radial-gradient(circle, rgba(98,89,204,0.15) 0%, transparent 70%)", top: -100, left: -200 }} />
-        <div style={{ position: "absolute", width: 500, height: 500, borderRadius: "50%", background: "radial-gradient(circle, rgba(140,128,255,0.1) 0%, transparent 70%)", bottom: -100, right: -150 }} />
+        <div style={{ position: "absolute", width: 600, height: 600, borderRadius: "50%", background: "radial-gradient(circle, rgba(140,115,85,0.15) 0%, transparent 70%)", top: -100, left: -200 }} />
+        <div style={{ position: "absolute", width: 500, height: 500, borderRadius: "50%", background: "radial-gradient(circle, rgba(166,138,107,0.1) 0%, transparent 70%)", bottom: -100, right: -150 }} />
 
-        <motion.div variants={fadeUp} style={{ background: "rgba(98,89,204,0.15)", border: "1px solid rgba(98,89,204,0.3)", borderRadius: 99, padding: "6px 16px", fontSize: 12, fontWeight: 600, color: "#a8a0ff", marginBottom: 24, display: "inline-flex", gap: 6, alignItems: "center" }}>
+        <motion.div variants={fadeUp} style={{ background: "rgba(140,115,85,0.15)", border: "1px solid rgba(140,115,85,0.3)", borderRadius: 99, padding: "6px 16px", fontSize: 12, fontWeight: 600, color: "#a8a0ff", marginBottom: 24, display: "inline-flex", gap: 6, alignItems: "center" }}>
           ⚡ Event-Driven AI Onboarding Copilot
         </motion.div>
 
         <motion.h1 variants={fadeUp} style={{ fontSize: "clamp(36px, 5vw, 64px)", fontWeight: 800, letterSpacing: -2, lineHeight: 1.1, maxWidth: 800, margin: "0 0 20px" }}>
           Stop guessing how your <br />
-          <span style={{ background: "linear-gradient(135deg,#8c80ff,#c084fc)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>new hires</span> are doing.
+          <span style={{ background: "linear-gradient(135deg,#a68a6b,#c4a484)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>new hires</span> are doing.
         </motion.h1>
 
         <motion.p variants={fadeUp} style={{ fontSize: 17, color: "#94a3b8", maxWidth: 560, lineHeight: 1.7, margin: "0 0 36px" }}>
@@ -63,7 +63,7 @@ export default function LandingPage() {
         </motion.p>
 
         <motion.div variants={fadeUp} style={{ display: "flex", gap: 14 }}>
-          <Link href="/dashboard" style={{ background: "linear-gradient(135deg,#8c80ff,#6259cc)", color: "#fff", padding: "14px 32px", borderRadius: 12, textDecoration: "none", fontWeight: 700, fontSize: 15, boxShadow: "0 8px 30px rgba(98,89,204,0.4)" }}>
+          <Link href="/dashboard" style={{ background: "linear-gradient(135deg,#a68a6b,#8c7355)", color: "#fff", padding: "14px 32px", borderRadius: 12, textDecoration: "none", fontWeight: 700, fontSize: 15, boxShadow: "0 8px 30px rgba(140,115,85,0.4)" }}>
             Try the Live Demo →
           </Link>
           <a href="#how" style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", color: "#e2e8f0", padding: "14px 28px", borderRadius: 12, textDecoration: "none", fontWeight: 600, fontSize: 15 }}>
@@ -75,7 +75,7 @@ export default function LandingPage() {
       {/* How It Works */}
       <section id="how" style={{ padding: "100px 24px", maxWidth: 1100, margin: "0 auto" }}>
         <motion.div initial="hidden" whileInView="show" viewport={{ once: true }} variants={stagger} style={{ textAlign: "center", marginBottom: 60 }}>
-          <motion.span variants={fadeUp} style={{ color: "#8c80ff", fontSize: 12, fontWeight: 700, letterSpacing: 2 }}>THE 5-STEP WORKFLOW</motion.span>
+          <motion.span variants={fadeUp} style={{ color: "#a68a6b", fontSize: 12, fontWeight: 700, letterSpacing: 2 }}>THE 5-STEP WORKFLOW</motion.span>
           <motion.h2 variants={fadeUp} style={{ fontSize: 40, fontWeight: 800, letterSpacing: -1, margin: "12px 0 16px" }}>How Boardy Works</motion.h2>
           <motion.p variants={fadeUp} style={{ color: "#94a3b8", fontSize: 15, maxWidth: 500, margin: "0 auto" }}>From data collection to AI-powered insight — fully automated, completely private.</motion.p>
         </motion.div>
@@ -92,7 +92,7 @@ export default function LandingPage() {
               background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 16,
               padding: 28, position: "relative", overflow: "hidden",
             }}>
-              <div style={{ fontSize: 11, color: "#6259cc", fontWeight: 800, letterSpacing: 2, marginBottom: 12 }}>STEP {s.step}</div>
+              <div style={{ fontSize: 11, color: "#8c7355", fontWeight: 800, letterSpacing: 2, marginBottom: 12 }}>STEP {s.step}</div>
               <div style={{ fontSize: 28, marginBottom: 12 }}>{s.icon}</div>
               <h3 style={{ fontSize: 17, fontWeight: 700, marginBottom: 8 }}>{s.title}</h3>
               <p style={{ fontSize: 13, color: "#94a3b8", lineHeight: 1.6 }}>{s.desc}</p>
@@ -104,7 +104,7 @@ export default function LandingPage() {
       {/* Features */}
       <section id="features" style={{ padding: "80px 24px", maxWidth: 1100, margin: "0 auto" }}>
         <motion.div initial="hidden" whileInView="show" viewport={{ once: true }} variants={stagger} style={{ textAlign: "center", marginBottom: 60 }}>
-          <motion.span variants={fadeUp} style={{ color: "#8c80ff", fontSize: 12, fontWeight: 700, letterSpacing: 2 }}>CORE CAPABILITIES</motion.span>
+          <motion.span variants={fadeUp} style={{ color: "#a68a6b", fontSize: 12, fontWeight: 700, letterSpacing: 2 }}>CORE CAPABILITIES</motion.span>
           <motion.h2 variants={fadeUp} style={{ fontSize: 40, fontWeight: 800, letterSpacing: -1, margin: "12px 0" }}>Built for Modern Teams</motion.h2>
         </motion.div>
 
@@ -121,7 +121,7 @@ export default function LandingPage() {
             }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "start", marginBottom: 14 }}>
                 <h3 style={{ fontSize: 17, fontWeight: 700 }}>{f.title}</h3>
-                <span style={{ background: "rgba(98,89,204,0.15)", color: "#a8a0ff", fontSize: 10, fontWeight: 700, padding: "4px 10px", borderRadius: 6 }}>{f.badge}</span>
+                <span style={{ background: "rgba(140,115,85,0.15)", color: "#a8a0ff", fontSize: 10, fontWeight: 700, padding: "4px 10px", borderRadius: 6 }}>{f.badge}</span>
               </div>
               <p style={{ fontSize: 13, color: "#94a3b8", lineHeight: 1.6 }}>{f.desc}</p>
             </motion.div>
@@ -132,7 +132,7 @@ export default function LandingPage() {
       {/* Why Boardy / Business Value */}
       <section id="why" style={{ padding: "80px 24px", maxWidth: 900, margin: "0 auto", textAlign: "center" }}>
         <motion.div initial="hidden" whileInView="show" viewport={{ once: true }} variants={stagger}>
-          <motion.span variants={fadeUp} style={{ color: "#8c80ff", fontSize: 12, fontWeight: 700, letterSpacing: 2 }}>BUSINESS VALUE</motion.span>
+          <motion.span variants={fadeUp} style={{ color: "#a68a6b", fontSize: 12, fontWeight: 700, letterSpacing: 2 }}>BUSINESS VALUE</motion.span>
           <motion.h2 variants={fadeUp} style={{ fontSize: 40, fontWeight: 800, letterSpacing: -1, margin: "12px 0 40px" }}>Why Companies Need Boardy</motion.h2>
 
           <motion.div variants={fadeUp} style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 24 }}>
@@ -145,7 +145,7 @@ export default function LandingPage() {
                 background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)",
                 borderRadius: 16, padding: "32px 24px",
               }}>
-                <div style={{ fontSize: 36, fontWeight: 800, background: "linear-gradient(135deg,#8c80ff,#c084fc)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", marginBottom: 8 }}>{v.metric}</div>
+                <div style={{ fontSize: 36, fontWeight: 800, background: "linear-gradient(135deg,#a68a6b,#c4a484)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", marginBottom: 8 }}>{v.metric}</div>
                 <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 8 }}>{v.label}</div>
                 <p style={{ fontSize: 12, color: "#64748b", lineHeight: 1.5 }}>{v.detail}</p>
               </div>
@@ -165,9 +165,9 @@ export default function LandingPage() {
           </motion.p>
           <motion.div variants={fadeUp}>
             <Link href="/dashboard" style={{
-              background: "linear-gradient(135deg,#8c80ff,#6259cc)", color: "#fff",
+              background: "linear-gradient(135deg,#a68a6b,#8c7355)", color: "#fff",
               padding: "16px 40px", borderRadius: 12, textDecoration: "none", fontWeight: 700, fontSize: 16,
-              boxShadow: "0 10px 40px rgba(98,89,204,0.5)", display: "inline-block",
+              boxShadow: "0 10px 40px rgba(140,115,85,0.5)", display: "inline-block",
             }}>
               Launch Dashboard →
             </Link>
