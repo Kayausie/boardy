@@ -1,0 +1,364 @@
+"use client";
+
+import { useMemo, useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import ReactMarkdown from "react-markdown";
+
+type Activity = { type: "mail" | "upload" | "task" | "comment"; text: string; meta: string; time: string };
+type Task = { title: string; detail: string; progress: number; status: string; due: string };
+type Person = { id: number; name: string; initials: string; role: string; department: string; start: string; remaining: number; score: number; status: "Above & beyond" | "Well done" | "Needs support"; color: string; tasks: Task[]; activities: Activity[] };
+
+const initialPeople: Person[] = [
+  { id: 1, name: "Maya Chen", initials: "MC", role: "Product Designer", department: "Product", start: "12 Aug 2024", remaining: 24, score: 89, status: "Above & beyond", color: "#d9e9ff", tasks: [
+    { title: "Redesign the onboarding flow", detail: "Design · Core product", progress: 82, status: "In progress", due: "Due Sep 20" },
+    { title: "Run usability test synthesis", detail: "Research · Growth", progress: 100, status: "Complete", due: "Completed Sep 8" },
+    { title: "Document component handoff", detail: "Design systems", progress: 45, status: "In progress", due: "Due Sep 24" },
+  ], activities: [
+    { type: "upload", text: "Uploaded 3 research synthesis files", meta: "Onboarding research", time: "Today, 10:32 AM" },
+    { type: "mail", text: "Sent an update to the Growth team", meta: "Subject: Usability insights — week 3", time: "Today, 9:14 AM" },
+    { type: "comment", text: "Left feedback on the onboarding prototype", meta: "Figma · 4 comments", time: "Yesterday, 4:48 PM" },
+    { type: "task", text: "Moved “Usability test synthesis” to complete", meta: "Task activity", time: "Yesterday, 3:05 PM" },
+  ] },
+  { id: 2, name: "Daniel Ross", initials: "DR", role: "Frontend Engineer", department: "Engineering", start: "19 Aug 2024", remaining: 31, score: 76, status: "Well done", color: "#ffe6c7", tasks: [
+    { title: "Build billing settings screen", detail: "Frontend · Billing", progress: 70, status: "In progress", due: "Due Sep 22" },
+    { title: "Resolve mobile navigation bugs", detail: "Frontend · Core product", progress: 100, status: "Complete", due: "Completed Sep 7" },
+    { title: "Write component test coverage", detail: "Engineering quality", progress: 35, status: "In progress", due: "Due Sep 28" },
+  ], activities: [
+    { type: "task", text: "Opened a pull request for billing settings", meta: "PR #286 · 12 files changed", time: "Today, 11:08 AM" },
+    { type: "mail", text: "Replied to implementation feedback", meta: "Subject: Billing settings review", time: "Yesterday, 5:20 PM" },
+    { type: "comment", text: "Commented on a customer-reported issue", meta: "Issue #1194", time: "Yesterday, 2:15 PM" },
+  ] },
+  { id: 3, name: "Priya Shah", initials: "PS", role: "People Operations", department: "People", start: "26 Aug 2024", remaining: 38, score: 71, status: "Well done", color: "#e9dcff", tasks: [{ title: "Refresh new starter checklist", detail: "People operations", progress: 90, status: "In progress", due: "Due Sep 17" }, { title: "Audit leave policy pages", detail: "Knowledge base", progress: 100, status: "Complete", due: "Completed Sep 6" }], activities: [{ type: "upload", text: "Uploaded a revised onboarding checklist", meta: "People hub · Version 3", time: "Today, 8:42 AM" }, { type: "mail", text: "Sent welcome information to new starters", meta: "6 recipients", time: "Yesterday, 10:16 AM" }] },
+  { id: 4, name: "Marcus Lee", initials: "ML", role: "Account Executive", department: "Sales", start: "02 Sep 2024", remaining: 45, score: 58, status: "Needs support", color: "#d5f0df", tasks: [{ title: "Complete CRM discovery notes", detail: "Sales · Pipeline", progress: 45, status: "In progress", due: "Due Sep 16" }, { title: "Deliver product knowledge assessment", detail: "Training", progress: 20, status: "In progress", due: "Due Sep 19" }], activities: [{ type: "mail", text: "Opened sales enablement resources", meta: "Training series · 3 documents", time: "Yesterday, 1:24 PM" }, { type: "comment", text: "Asked a question in the onboarding channel", meta: "#sales-onboarding", time: "Monday, 3:02 PM" }] },
+  { id: 5, name: "Sofia Nguyen", initials: "SN", role: "Marketing Associate", department: "Marketing", start: "09 Sep 2024", remaining: 52, score: 83, status: "Above & beyond", color: "#ffe1eb", tasks: [{ title: "Prepare Q4 campaign brief", detail: "Marketing · Campaigns", progress: 68, status: "In progress", due: "Due Sep 26" }, { title: "Compile social performance report", detail: "Marketing · Reporting", progress: 100, status: "Complete", due: "Completed Sep 9" }], activities: [{ type: "upload", text: "Uploaded the August social report", meta: "Growth drive", time: "Today, 9:02 AM" }, { type: "task", text: "Completed social performance report", meta: "2 days ahead of schedule", time: "Yesterday, 4:34 PM" }] },
+];
+
+const iconPaths: Record<string, React.ReactNode> = {
+  grid: <><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></>,
+  people: <><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></>, check: <path d="m5 12 4 4L19 6"/>, chart: <><path d="M3 3v18h18"/><path d="m7 16 4-5 3 2 5-7"/></>,
+  settings: <><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.88l.06.06-2.12 2.12-.06-.06a1.7 1.7 0 0 0-1.88-.34 1.7 1.7 0 0 0-1.03 1.56V20.3h-3v-.08A1.7 1.7 0 0 0 10.68 18.66a1.7 1.7 0 0 0-1.88.34l-.06.06-2.12-2.12.06-.06A1.7 1.7 0 0 0 7.02 15a1.7 1.7 0 0 0-1.56-1.03H5.4v-3h.06A1.7 1.7 0 0 0 7.02 9.94a1.7 1.7 0 0 0-.34-1.88l-.06-.06 2.12-2.12.06.06a1.7 1.7 0 0 0 1.88.34A1.7 1.7 0 0 0 11.71 4.7v-.08h3v.08a1.7 1.7 0 0 0 1.03 1.56 1.7 1.7 0 0 0 1.88-.34l.06-.06L19.8 8l-.06.06a1.7 1.7 0 0 0-.34 1.88 1.7 1.7 0 0 0 1.56 1.03h.08v3h-.08A1.7 1.7 0 0 0 19.4 15Z"/></>,
+  search: <><circle cx="11" cy="11" r="6"/><path d="m20 20-4.3-4.3"/></>, bell: <><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"/></>, plus: <path d="M12 5v14M5 12h14"/>, filter: <><path d="M4 6h16M7 12h10M10 18h4"/></>, dots: <><circle cx="5" cy="12" r="1" fill="currentColor"/><circle cx="12" cy="12" r="1" fill="currentColor"/><circle cx="19" cy="12" r="1" fill="currentColor"/></>, arrow: <><path d="M5 12h14M13 6l6 6-6 6"/></>, mail: <><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></>, upload: <><path d="M12 17V3M7 8l5-5 5 5"/><path d="M5 21h14"/></>, message: <path d="M21 11.5a8.3 8.3 0 0 1-9 8.2 8.3 8.3 0 0 1-4.1-1.1L3 20l1.5-4.3A8.3 8.3 0 1 1 21 11.5Z"/>, clipboard: <><rect x="5" y="5" width="14" height="16" rx="2"/><path d="M9 5V3h6v2M9 12h6M9 16h4"/></>, sparkles: <path d="m12 3-1.2 4.1L7 8.3l3.8 1.2L12 14l1.2-4.5L17 8.3l-3.8-1.2L12 3ZM19 15l-.6 2.1-2.1.6 2.1.6.6 2.1.6-2.1 2.1-.6-2.1-.6L19 15Z"/>, calendar: <><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18"/></>, zap: <><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></>,
+  sun: <><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></>,
+  moon: <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>
+};
+function Icon({ name, size = 18, className }: { name: string; size?: number; className?: string }) { return <svg width={size} height={size} className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{iconPaths[name]}</svg>; }
+
+const estimation = {
+  "Above & beyond": { copy: "Consistently moving work forward independently and contributing beyond core responsibilities.", tone: "excellent" },
+  "Well done": { copy: "Meeting role expectations with steady delivery and a healthy ramp-up trajectory.", tone: "good" },
+  "Needs support": { copy: "Would benefit from a focused check-in and a clear plan to build confidence in the role.", tone: "support" },
+};
+
+export default function Home() {
+  const [people, setPeople] = useState<Person[]>(initialPeople);
+  const [isDarkMode, setIsDarkMode] = useState(false);
+  const [viewRole, setViewRole] = useState<"Manager" | "HR">("Manager");
+  useEffect(() => {
+    if (isDarkMode) document.documentElement.classList.add("dark");
+    else document.documentElement.classList.remove("dark");
+  }, [isDarkMode]);
+
+  // Fetch users from DB on mount
+  useEffect(() => {
+    fetch("/api/users").then(r => r.json()).then(data => {
+      if (data.success && data.users.length > 0) {
+        setPeople(data.users.map((u: any) => ({
+          id: u.id, name: u.name, initials: u.initials, role: u.role,
+          department: u.department, start: u.start_date, remaining: u.remaining,
+          score: u.score, status: u.status as any, color: u.color,
+          tasks: [], activities: []
+        })));
+      }
+    }).catch(() => {});
+  }, []);
+
+  const [selectedId, setSelectedId] = useState(1); 
+  const [query, setQuery] = useState(""); 
+  const [tab, setTab] = useState<"Overview" | "Tasks" | "Activity" | "AI Buddy">("Overview"); 
+  const [modal, setModal] = useState(false); 
+  const [toast, setToast] = useState("");
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [sortAsc, setSortAsc] = useState(true);
+  const [dbEvents, setDbEvents] = useState<any[]>([]);
+  
+  const [chatMessages, setChatMessages] = useState([{ role: "assistant", content: "Hi, I'm your AI Assessment Assistant. I can analyze employee progress, activities, and identify blockers. What would you like to know?" }]);
+  const [messageInput, setMessageInput] = useState("");
+  
+  const [newStaff, setNewStaff] = useState({ name: "", dept: "", role: "", date: "" });
+
+  const selected = people.find(p => p.id === selectedId) ?? people[0]; 
+  const shown = useMemo(() => {
+    let filtered = people.filter(p => `${p.name} ${p.role} ${p.department}`.toLowerCase().includes(query.toLowerCase()));
+    if (!sortAsc) filtered = [...filtered].reverse();
+    return filtered;
+  }, [people, query, sortAsc]);
+  
+  // Fetch events when selected user changes
+  useEffect(() => {
+    if (selected?.id) {
+      fetch(`/api/users/${selected.id}/events`).then(r => r.json()).then(data => {
+        if (data.success) setDbEvents(data.events);
+      }).catch(() => {});
+    }
+  }, [selected?.id]);
+
+  const ai = estimation[selected?.status] || estimation["Needs support"]; 
+  const progress = Math.round((90 - (selected?.remaining || 60)) / 90 * 100);
+  const notify = (text: string) => { setToast(text); window.setTimeout(() => setToast(""), 2800); };
+
+  const handleGenerateSummary = async () => {
+    setIsGenerating(true);
+    notify(`Generating ${viewRole} summary...`);
+    try {
+      const res = await fetch("/api/summary/generate", { 
+        method: "POST", 
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: selected.id, role: viewRole })
+      });
+      const data = await res.json();
+      if (data.success) {
+        setChatMessages(prev => [...prev, { role: "assistant", content: `**${viewRole} Summary for ${selected.name}:**\n\n${data.summary}` }]);
+        setTab("AI Buddy");
+        notify(`${viewRole} summary generated!`);
+      } else {
+        notify("Error: " + data.error);
+      }
+    } catch (e) {
+      console.error(e);
+      notify("Failed to generate summary.");
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const handleSendMessage = async () => {
+    if (!messageInput.trim()) return;
+    const newMessages = [...chatMessages, { role: "user", content: messageInput }];
+    setChatMessages(newMessages);
+    setMessageInput("");
+    setIsGenerating(true);
+    
+    try {
+      const res = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ messages: newMessages, userId: selected.id })
+      });
+      const data = await res.json();
+      if (data.success) {
+        setChatMessages([...newMessages, { role: "assistant", content: data.text }]);
+      } else {
+        notify("Gemini Error: " + data.error);
+      }
+    } catch (e) {
+      console.error(e);
+      notify("Failed to connect to AI Buddy.");
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const handleAddStaff = async () => {
+    if (!newStaff.name) { notify("Name is required"); return; }
+    try {
+      const res = await fetch("/api/users", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: newStaff.name, role: newStaff.role, department: newStaff.dept, startDate: newStaff.date })
+      });
+      const data = await res.json();
+      if (data.success) {
+        const u = data.user;
+        const newPerson: Person = {
+          id: u.id, name: u.name, initials: u.initials, role: u.role,
+          department: u.department, start: u.start_date, remaining: u.remaining,
+          score: u.score, status: u.status as any, color: u.color,
+          tasks: [], activities: []
+        };
+        setPeople([newPerson, ...people]);
+        setModal(false);
+        setNewStaff({ name: "", dept: "", role: "", date: "" });
+        setSelectedId(newPerson.id);
+        notify(`${newStaff.name} has been added to the database.`);
+      }
+    } catch (e) {
+      notify("Failed to add staff.");
+    }
+  };
+
+  const handleSimulateWebhook = async () => {
+    const events = [
+      { eventType: "github_commit", description: "Merged PR #312 — feature/dashboard-redesign", payload: { pr: "#312", files: 8, additions: 245 } },
+      { eventType: "jira_task", description: "Moved 'Setup CI/CD pipeline' to Done", payload: { task: "Setup CI/CD pipeline", status: "Done" } },
+      { eventType: "ms365_document", description: "Created weekly progress report", payload: { source: "OneDrive", type: "docx" } },
+    ];
+    const randomEvent = events[Math.floor(Math.random() * events.length)];
+    try {
+      const res = await fetch("/api/webhooks/simulator", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: selected.id, ...randomEvent })
+      });
+      const data = await res.json();
+      if (data.success) {
+        // Refresh user list from DB
+        const usersRes = await fetch("/api/users");
+        const usersData = await usersRes.json();
+        if (usersData.success) {
+          setPeople(usersData.users.map((u: any) => ({
+            id: u.id, name: u.name, initials: u.initials, role: u.role,
+            department: u.department, start: u.start_date, remaining: u.remaining,
+            score: u.score, status: u.status as any, color: u.color,
+            tasks: [], activities: []
+          })));
+        }
+        // Refresh events
+        const evRes = await fetch(`/api/users/${selected.id}/events`);
+        const evData = await evRes.json();
+        if (evData.success) setDbEvents(evData.events);
+        notify(`⚡ Webhook: ${randomEvent.description} (+${data.scoreBoost} points)`);
+      }
+    } catch (e) {
+      notify("Webhook simulation failed.");
+    }
+  };
+
+  return <main className="app-shell">
+    <aside className="side-rail"><div className="brand-mark">P</div><nav className="rail-nav" aria-label="Primary navigation"><button className="rail-item"><Icon name="grid" /></button><button className="rail-item active"><Icon name="people" /></button><button className="rail-item"><Icon name="check" /></button><button className="rail-item"><Icon name="chart" /></button></nav><button className="rail-item rail-bottom" onClick={() => setIsDarkMode(!isDarkMode)}><Icon name={isDarkMode ? "sun" : "moon"} /></button><button className="rail-item" style={{marginBottom:'10px'}}><Icon name="settings" /></button></aside>
+    <section className="staff-panel">
+      <div className="panel-heading"><div><span className="eyebrow">WORKSPACE</span><h1>Probation</h1></div><button className="avatar user-avatar" onClick={() => notify("User profile clicked")}>KT</button></div>
+      <div className="staff-toolbar"><label className="search-field"><Icon name="search" size={16}/><input value={query} onChange={e => setQuery(e.target.value)} placeholder="Search people" /></label><button className="icon-button" onClick={() => {setSortAsc(!sortAsc); notify(sortAsc ? "Sorted Z-A" : "Sorted A-Z")}}><Icon name="filter" size={17}/></button></div>
+      <div className="staff-subheader"><span>ON PROBATION</span><span>{people.length} people</span></div>
+      <div className="staff-list">
+        <AnimatePresence>
+          {shown.map(p => (
+            <motion.button initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0 }} layout key={p.id} className={`staff-row ${selected.id === p.id ? "selected" : ""}`} onClick={() => {setSelectedId(p.id); setTab("Overview");}}>
+              <span className="avatar" style={{backgroundColor:p.color}}>{p.initials}</span>
+              <span className="staff-copy"><strong>{p.name}</strong><small>{p.role}</small></span>
+              {p.status === "Needs support" && <span className="attention-dot"/>}
+            </motion.button>
+          ))}
+        </AnimatePresence>
+        {!shown.length && <div className="empty-result">No matching team members.</div>}
+      </div>
+      <button className="add-person" onClick={() => setModal(true)}><Icon name="plus" size={17}/> Add new staff</button>
+    </section>
+    
+    <section className="workspace">
+      <header className="topbar">
+        <div className="crumb"><span>People</span><span>/</span><strong>Probation review</strong></div>
+        <div className="top-actions">
+          <div style={{display:'flex',borderRadius:'8px',overflow:'hidden',border:'1px solid #5e55ca',fontSize:'11px',fontWeight:'bold'}}>
+            <button onClick={() => setViewRole("Manager")} style={{padding:'6px 12px',border:'0',background: viewRole === 'Manager' ? '#5e55ca' : 'transparent',color: viewRole === 'Manager' ? '#fff' : '#5e55ca',cursor:'pointer'}}>Manager</button>
+            <button onClick={() => setViewRole("HR")} style={{padding:'6px 12px',border:'0',borderLeft:'1px solid #5e55ca',background: viewRole === 'HR' ? '#5e55ca' : 'transparent',color: viewRole === 'HR' ? '#fff' : '#5e55ca',cursor:'pointer'}}>HR</button>
+          </div>
+          <button onClick={handleSimulateWebhook} style={{border:'1px dashed #5e55ca',background:'transparent',color:'#5e55ca',padding:'8px 12px',borderRadius:'8px',fontSize:'12px',fontWeight:'bold',cursor:'pointer',display:'flex',gap:'6px',alignItems:'center'}}>
+            <Icon name="zap" size={14}/> Simulate Webhook
+          </button>
+          <button onClick={handleGenerateSummary} disabled={isGenerating} style={{border:'0',background:'#5e55ca',color:'#fff',padding:'8px 12px',borderRadius:'8px',fontSize:'12px',fontWeight:'bold',cursor:'pointer'}}>
+            {isGenerating ? "Generating..." : `${viewRole} Summary`}
+          </button>
+          <button className="icon-button notification" onClick={() => notify("No new notifications")}><Icon name="bell" size={18}/><i/></button>
+          <button className="avatar profile-avatar" onClick={() => notify("Settings menu opened")}>KT</button>
+        </div>
+      </header>
+      
+      <div className="content-wrap">
+        <motion.div key={selected.id} initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
+          <section className="profile-header"><div className="profile-title"><span className="large-avatar" style={{backgroundColor:selected.color}}>{selected.initials}</span><div><div className="title-row"><h2>{selected.name}</h2><span className={`status-pill ${ai.tone}`}>{selected.status}</span></div><p>{selected.role} <span>·</span> {selected.department}</p></div></div><button className="more-button" onClick={() => notify("Review actions are ready to be configured.")}><Icon name="dots" size={20}/></button></section>
+          <section className="probation-banner"><div className="calendar-icon"><Icon name="calendar" size={18}/></div><div className="probation-copy"><span>PROBATION PERIOD</span><strong>{selected.remaining} days remaining</strong><small>Started {selected.start} · Review due 10 Oct 2024</small></div><div className="progress-summary"><div><span>Progress</span><strong>{progress}%</strong></div><div className="progress-track"><motion.i initial={{width:0}} animate={{width:`${progress}%`}} transition={{duration:0.8}}/></div></div></section>
+        </motion.div>
+
+        <div className="tabs" role="tablist">
+          {(["Overview","Tasks","Activity","AI Buddy"] as const).map(name => (
+            <button key={name} className={tab===name?"active":""} onClick={() => setTab(name as any)}>
+              {name}{name === "Tasks" && <span>{selected.tasks.length}</span>}{name === "Activity" && <span>{dbEvents.length}</span>}
+            </button>
+          ))}
+        </div>
+        
+        <AnimatePresence mode="wait">
+          <motion.div key={tab} initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -10 }} transition={{ duration: 0.2 }}>
+            {tab === "Overview" && <><section className="section-topline"><div><span className="eyebrow">AI PERFORMANCE ESTIMATE</span><h3>Performance snapshot</h3></div><button className="text-button" onClick={() => notify("The estimate refreshes as new activity arrives.")}>How it works <Icon name="arrow" size={15}/></button></section><section className="estimate-grid"><article className={`score-card ${ai.tone}`}><div className="score-card-head"><span>Current estimate</span><Icon name="sparkles" size={18}/></div><div className="score-content"><div className="score-ring" style={{"--score":`${selected.score * 3.6}deg`} as React.CSSProperties}><div><strong>{selected.score}</strong><span>/100</span></div></div><div><h4>{selected.status}</h4><p>{ai.copy}</p></div></div><div className="score-foot"><span>Based on tasks, activity & feedback</span><button onClick={() => notify("Assessment details opened.")}>View details <Icon name="arrow" size={14}/></button></div></article><article className="signals-card"><div className="card-title"><div><span className="eyebrow">KEY SIGNALS</span><h3>What’s driving this</h3></div><button className="more-button"><Icon name="dots" size={18}/></button></div><div className="signals"><Signal icon="check" color="purple" title={`${selected.tasks.filter(t => t.progress === 100).length + 4} tasks completed`} body="on or ahead of schedule" impact="+12"/><Signal icon="message" color="blue" title="Responsive collaboration" body="Avg. reply time: 1h 14m" impact="+8"/><Signal icon="clipboard" color="orange" title="Growth opportunity" body="Documentation consistency" impact="—"/></div></article></section><section className="section-topline task-heading"><div><span className="eyebrow">CURRENT WORK</span><h3>Assigned tasks</h3></div><button className="text-button" onClick={() => setTab("Tasks")}>View all tasks <Icon name="arrow" size={15}/></button></section><section className="tasks-card">{selected.tasks.map(t => <TaskRow task={t} key={t.title}/>)}</section><section className="section-topline activity-heading"><div><span className="eyebrow">RECENT ACTIVITY</span><h3>Latest updates</h3></div><button className="text-button" onClick={() => setTab("Activity")}>View activity <Icon name="arrow" size={15}/></button></section><section className="activity-card">{selected.activities.slice(0,3).map((a,i) => <ActivityRow activity={a} key={i}/>)}</section></>}
+            
+            {tab === "Tasks" && <section className="tasks-card full-card">{selected.tasks.length === 0 ? <div style={{padding:'20px',color:'#777'}}>No tasks yet.</div> : selected.tasks.map(t => <TaskRow task={t} key={t.title}/>)}</section>}
+            
+            {tab === "Activity" && <section className="activity-card full-card">{dbEvents.length === 0 ? <div style={{padding:'20px',color:'#777'}}>No events recorded yet.</div> : dbEvents.map((ev: any, i: number) => {
+              const iconMap: Record<string,string> = {github_commit:"upload",github_issue:"message",jira_task:"check",ms365_document:"upload",ms365_email:"mail",figma_comment:"message",slack_message:"message"};
+              const typeMap: Record<string,string> = {github_commit:"upload",github_issue:"comment",jira_task:"task",ms365_document:"upload",ms365_email:"mail",figma_comment:"comment",slack_message:"comment"};
+              return <div className="activity-row" key={i}><span className={`activity-icon ${typeMap[ev.event_type] || 'task'}`}><Icon name={iconMap[ev.event_type] || "check"} size={16}/></span><div><strong>{ev.description}</strong><small>{ev.event_type.replace(/_/g, " ").toUpperCase()}</small></div><time>{new Date(ev.timestamp).toLocaleString()}</time></div>;
+            })}</section>}
+            
+            {tab === "AI Buddy" && (
+              <section className="tasks-card full-card" style={{padding:'20px', display:'flex', flexDirection:'column', gap:'16px', minHeight:'400px'}}>
+                <div style={{flex:1, overflowY:'auto', display:'flex', flexDirection:'column', gap:'16px', paddingRight:'10px'}}>
+                  {chatMessages.map((msg, i) => (
+                    <motion.div initial={{opacity:0, y:5}} animate={{opacity:1, y:0}} key={i} style={{alignSelf: msg.role === 'user' ? 'flex-end' : 'flex-start', background: msg.role === 'user' ? '#f1efff' : '#f7f7fb', padding:'12px 16px', borderRadius:'10px', maxWidth:'85%', fontSize:'13px', lineHeight:'1.6', color:'#424459', border:'1px solid #efeff4'}}>
+                      <strong style={{display:'block', marginBottom:'6px', color: msg.role === 'user' ? '#6259cc' : '#333'}}>{msg.role === 'user' ? 'You' : 'AI Assistant'}</strong>
+                      {msg.role === 'assistant' ? (
+                        <ReactMarkdown components={{
+                          p: ({node, ...props}) => <p style={{margin: '0 0 8px 0'}} {...props} />,
+                          ul: ({node, ...props}) => <ul style={{margin: '0 0 8px 0', paddingLeft: '20px'}} {...props} />,
+                          li: ({node, ...props}) => <li style={{marginBottom: '4px'}} {...props} />,
+                          strong: ({node, ...props}) => <strong style={{fontWeight: 700}} {...props} />,
+                        }}>{msg.content}</ReactMarkdown>
+                      ) : (
+                        msg.content
+                      )}
+                    </motion.div>
+                  ))}
+                  {isGenerating && (
+                    <motion.div initial={{opacity:0}} animate={{opacity:1}} style={{alignSelf: 'flex-start', background: '#f7f7fb', padding:'12px 16px', borderRadius:'10px', display:'flex', gap:'4px'}}>
+                      <motion.span animate={{y:[0,-5,0]}} transition={{repeat:Infinity, duration:0.6, delay:0}} style={{width:6,height:6,background:'#aaa',borderRadius:'50%',display:'block'}}/>
+                      <motion.span animate={{y:[0,-5,0]}} transition={{repeat:Infinity, duration:0.6, delay:0.2}} style={{width:6,height:6,background:'#aaa',borderRadius:'50%',display:'block'}}/>
+                      <motion.span animate={{y:[0,-5,0]}} transition={{repeat:Infinity, duration:0.6, delay:0.4}} style={{width:6,height:6,background:'#aaa',borderRadius:'50%',display:'block'}}/>
+                    </motion.div>
+                  )}
+                </div>
+                <div style={{display:'flex', gap:'8px', marginTop:'auto'}}>
+                  <input type="text" value={messageInput} onChange={e => setMessageInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleSendMessage()} disabled={isGenerating} placeholder="Ask something..." style={{flex:1, padding:'12px', borderRadius:'8px', border:'1px solid #dedee8', fontSize:'13px'}} />
+                  <button onClick={handleSendMessage} disabled={isGenerating} style={{background:'#6259cc', color:'#fff', border:'0', padding:'0 20px', borderRadius:'8px', fontSize:'13px', fontWeight:'bold', cursor: isGenerating ? 'not-allowed' : 'pointer'}}>Send</button>
+                </div>
+              </section>
+            )}
+          </motion.div>
+        </AnimatePresence>
+      </div>
+    </section>
+    
+    <AnimatePresence>
+      {modal && (
+        <motion.div initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} className="modal-backdrop" onMouseDown={() => setModal(false)}>
+          <motion.div initial={{scale:0.95, y:10}} animate={{scale:1, y:0}} exit={{scale:0.95, y:10}} className="modal" onMouseDown={e=>e.stopPropagation()}>
+            <button className="modal-close" onClick={() => setModal(false)}>×</button>
+            <span className="eyebrow">NEW PROBATION RECORD</span>
+            <h2>Add a team member</h2>
+            <p>Create a profile to start tracking onboarding progress and probation milestones.</p>
+            <div className="form-grid">
+              <label>Full name<input placeholder="e.g. Jordan Taylor" value={newStaff.name} onChange={e=>setNewStaff({...newStaff, name:e.target.value})}/></label>
+              <label>Department<select value={newStaff.dept} onChange={e=>setNewStaff({...newStaff, dept:e.target.value})}><option value="" disabled>Select department</option><option>Product</option><option>Engineering</option><option>People</option><option>Sales</option></select></label>
+              <label>Job title<input placeholder="e.g. Customer Success Manager" value={newStaff.role} onChange={e=>setNewStaff({...newStaff, role:e.target.value})}/></label>
+              <label>Start date<input type="date" value={newStaff.date} onChange={e=>setNewStaff({...newStaff, date:e.target.value})}/></label>
+            </div>
+            <div className="modal-actions">
+              <button className="cancel-button" onClick={() => setModal(false)}>Cancel</button>
+              <button className="primary-button" onClick={handleAddStaff}>Create profile</button>
+            </div>
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+    
+    <AnimatePresence>
+      {toast && (
+        <motion.div initial={{opacity:0, y:20}} animate={{opacity:1, y:0}} exit={{opacity:0, y:20}} className="toast">
+          <Icon name="check" size={16}/>{toast}
+        </motion.div>
+      )}
+    </AnimatePresence>
+  </main>;
+}
+
+function Signal({icon,color,title,body,impact}:{icon:string;color:string;title:string;body:string;impact:string}) { return <div><span className={`signal-icon ${color}`}><Icon name={icon} size={16}/></span><p><strong>{title}</strong><small>{body}</small></p><b className={impact === "—" ? "neutral" : "positive"}>{impact}</b></div>; }
+function TaskRow({task}:{task:Task}) { return <div className="task-row"><div className="task-main"><span className={`task-check ${task.progress===100?"done":""}`}>{task.progress===100&&<Icon name="check" size={13}/>}</span><div><strong>{task.title}</strong><small>{task.detail}</small></div></div><div className="task-progress"><div className="mini-bar"><i style={{width:`${task.progress}%`}}/></div><span>{task.progress}%</span></div><div className={`task-status ${task.progress===100?"complete":""}`}>{task.status}</div><small className="due">{task.due}</small><button className="more-button"><Icon name="dots" size={17}/></button></div>; }
+function ActivityRow({activity}:{activity:Activity}) { const icons={mail:"mail",upload:"upload",task:"check",comment:"message"}; return <div className="activity-row"><span className={`activity-icon ${activity.type}`}><Icon name={icons[activity.type]} size={16}/></span><div><strong>{activity.text}</strong><small>{activity.meta}</small></div><time>{activity.time}</time></div>; }

@@ -39,3 +39,14 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Database
+boardy.db
+boardy.db-wal
+boardy.db-shm
+
+# Prisma
+prisma/dev.db
+
+# Test scripts
+test-models.js

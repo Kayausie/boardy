@@ -1,0 +1,43 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model User {
+  id         Int        @id @default(autoincrement())
+  name       String
+  initials   String
+  role       String
+  department String
+  startDate  String
+  remaining  Int        @default(60)
+  score      Int        @default(0)
+  status     String     @default("Needs support")
+  color      String     @default("#e2e8f0")
+  createdAt  DateTime   @default(now())
+  events     EventLog[]
+  summaries  Summary[]
+}
+
+model EventLog {
+  id          Int      @id @default(autoincrement())
+  userId      Int
+  eventType   String   // "github_commit", "jira_task", "ms365_document", etc.
+  description String
+  payload     String   @default("{}") // JSON string for flexible metadata
+  timestamp   DateTime @default(now())
+  user        User     @relation(fields: [userId], references: [id])
+}
+
+model Summary {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  role      String   // "HR" or "Manager"
+  content   String
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id])
+}
