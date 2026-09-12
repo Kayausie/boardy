@@ -1,48 +1,89 @@
-import { NextResponse } from 'next/server';
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import db from "@/lib/db";
+import { GoogleGenerativeAI } from "@google/generative-ai";
+import { NextRequest, NextResponse } from "next/server";
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   try {
-    const { messages, employeeContext } = await req.json();
+    const body = await req.json();
+    const { messages, userId } = body;
 
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) {
-      return NextResponse.json({ 
-        success: false, 
-        error: "GEMINI_API_KEY is not set in environment variables." 
-      }, { status: 400 });
+      return NextResponse.json({ success: false, error: "GEMINI_API_KEY not configured" }, { status: 500 });
     }
+
+    // RAG: Retrieve user data and events from SQLite
+    const user = userId ? db.prepare(`SELECT * FROM users WHERE id = ?`).get(Number(userId)) as any : null;
+    
+    const events = userId
+      ? db.prepare(`SELECT * FROM event_logs WHERE user_id = ? ORDER BY timestamp DESC LIMIT 30`).all(Number(userId)) as any[]
+      : [];
+
+    const pastSummaries = userId
+      ? db.prepare(`SELECT * FROM summaries WHERE user_id = ? ORDER BY created_at DESC LIMIT 5`).all(Number(userId)) as any[]
+      : [];
+
+    // Build RAG context
+    const eventsContext = events.map((e: any) => {
+      const payload = JSON.parse(e.payload || "{}");
+      return `[${e.timestamp}] ${e.event_type}: ${e.description} | ${JSON.stringify(payload)}`;
+    }).join("\n");
+
+    const summariesContext = pastSummaries.map((s: any) =>
+      `[${s.created_at}] ${s.role} Summary:\n${s.content}`
+    ).join("\n\n");
+
+    let systemPrompt = `You are OnboardPilot (Boardy), an AI Assistant for HR and Senior Leaders/Managers. 
+You help them analyze their new employees' onboarding progress, identify blockers, and suggest management actions.
+Be professional, concise, and insightful. Use markdown formatting for readability.
+
+IMPORTANT CONTEXT: You have access to real-time data from the employee's integrated tools (GitHub, Jira, MS 365, Slack). Use this data to give accurate, data-driven answers.`;
+
+    if (user) {
+      systemPrompt += `\n\n═══ EMPLOYEE PROFILE (from Database) ═══
+Name: ${user.name}
+Role: ${user.role}
+Department: ${user.department}
+Start Date: ${user.start_date}
+Probation Days Remaining: ${user.remaining}
+AI Performance Score: ${user.score}/100
+Current Status: ${user.status}`;
+    }
+
+    if (eventsContext) {
+      systemPrompt += `\n\n═══ RECENT EVENT LOGS (RAG Retrieved from SQLite) ═══\n${eventsContext}`;
+    }
+
+    if (summariesContext) {
+      systemPrompt += `\n\n═══ PAST AI SUMMARIES ═══\n${summariesContext}`;
+    }
+
+    systemPrompt += `\n\nUse ALL the above data to answer the user's questions accurately. If they ask about activity, tasks, or progress, reference the specific event logs.`;
 
     const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: 'gemini-3.6-flash' });
+    const model = genAI.getGenerativeModel({ model: "gemini-3.6-flash" });
 
-    let systemPrompt = "You are OnboardPilot, an AI Assistant for HR and Senior Leaders. Your job is to help them analyze their new employees' onboarding progress, identify blockers, and suggest management actions. Be professional, concise, and insightful. IMPORTANT: Do NOT use markdown like **bold**, use plain text only.";
-    
-    if (employeeContext) {
-      systemPrompt += `\n\nYou are currently analyzing this employee:\nName: ${employeeContext.name}\nRole: ${employeeContext.role}\nDepartment: ${employeeContext.department}\nStatus: ${employeeContext.status}\n\nTasks:\n${JSON.stringify(employeeContext.tasks, null, 2)}\n\nRecent Activities:\n${JSON.stringify(employeeContext.activities, null, 2)}\n\nUse this context to answer the Leader's questions about this employee.`;
-    }
-
-    const history = messages.map((msg: any) => ({
-      role: msg.role === 'user' ? 'user' : 'model',
-      parts: [{ text: msg.content }]
+    // Build chat history for Gemini
+    const chatHistory = messages.slice(0, -1).map((m: any) => ({
+      role: m.role === "assistant" ? "model" : "user",
+      parts: [{ text: m.content }],
     }));
 
     const chat = model.startChat({
       history: [
-        { role: 'user', parts: [{ text: systemPrompt }] },
-        { role: 'model', parts: [{ text: 'Understood. I am ready to assist the Leader.' }] },
-        ...history.slice(0, -1) // Exclude the latest user message
-      ]
+        { role: "user", parts: [{ text: systemPrompt }] },
+        { role: "model", parts: [{ text: "Understood. I have access to the employee's real-time data from the database. I'm ready to help you analyze their onboarding progress. What would you like to know?" }] },
+        ...chatHistory,
+      ],
     });
 
-    const latestMessage = messages[messages.length - 1].content;
-    const result = await chat.sendMessage(latestMessage);
-    const response = await result.response;
-    const text = response.text();
+    const lastMessage = messages[messages.length - 1].content;
+    const result = await chat.sendMessage(lastMessage);
+    const text = result.response.text();
 
     return NextResponse.json({ success: true, text });
   } catch (error: any) {
-    console.error("Gemini Error:", error);
+    console.error("Chat error:", error);
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });
   }
 }
