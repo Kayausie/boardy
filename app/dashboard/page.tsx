@@ -284,9 +284,9 @@ export default function Home() {
       <header className="topbar">
         <div className="crumb"><span>People</span><span>/</span><strong>Probation review</strong></div>
         <div className="top-actions">
-          <div style={{display:'flex',borderRadius:'8px',overflow:'hidden',border:'1px solid var(--brand-color)',fontSize:'11px',fontWeight:'bold'}}>
-            <button onClick={() => setViewRole("Manager")} style={{padding:'6px 12px',border:'0',background: viewRole === 'Manager' ? 'var(--brand-color)' : 'transparent',color: viewRole === 'Manager' ? '#fff' : 'var(--brand-color)',cursor:'pointer'}}>Manager</button>
-            <button onClick={() => setViewRole("HR")} style={{padding:'6px 12px',border:'0',borderLeft:'1px solid var(--brand-color)',background: viewRole === 'HR' ? 'var(--brand-color)' : 'transparent',color: viewRole === 'HR' ? '#fff' : 'var(--brand-color)',cursor:'pointer'}}>HR</button>
+          <div style={{display:'flex', width:'140px', borderRadius:'8px', overflow:'hidden', border:'1px solid var(--brand-color)', fontSize:'11px', fontWeight:'600'}}>
+            <button onClick={() => setViewRole("Manager")} style={{flex:1, padding:'6px 0', border:'0', background: viewRole === 'Manager' ? 'var(--brand-color)' : 'transparent', color: viewRole === 'Manager' ? '#fff' : 'var(--brand-color)', cursor:'pointer', transition:'all 0.2s ease'}}>Manager</button>
+            <button onClick={() => setViewRole("HR")} style={{flex:1, padding:'6px 0', border:'0', borderLeft:'1px solid var(--brand-color)', background: viewRole === 'HR' ? 'var(--brand-color)' : 'transparent', color: viewRole === 'HR' ? '#fff' : 'var(--brand-color)', cursor:'pointer', transition:'all 0.2s ease'}}>HR</button>
           </div>
           <button onClick={handleSimulateWebhook} style={{border:'1px dashed var(--brand-color)',background:'transparent',color:'var(--brand-color)',padding:'8px 12px',borderRadius:'8px',fontSize:'12px',fontWeight:'bold',cursor:'pointer',display:'flex',gap:'6px',alignItems:'center'}}>
             <Icon name="zap" size={14}/> Simulate Webhook
