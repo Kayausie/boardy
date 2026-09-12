@@ -3,6 +3,9 @@
 import { useMemo, useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import ReactMarkdown from "react-markdown";
+import GridView from '../components/GridView';
+import TasksView from '../components/TasksView';
+import ChartView from '../components/ChartView';
 
 type Activity = { type: "mail" | "upload" | "task" | "comment"; text: string; meta: string; time: string };
 type Task = { title: string; detail: string; progress: number; status: string; due: string };
@@ -345,7 +348,7 @@ export default function Home() {
         
         <AnimatePresence mode="wait">
           <motion.div key={tab} initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -10 }} transition={{ duration: 0.2 }}>
-            {tab === "Overview" && <><section className="section-topline"><div><span className="eyebrow">AI PERFORMANCE ESTIMATE</span><h3>Performance snapshot</h3></div><button className="text-button" onClick={() => setActiveModal("how-it-works")}>How it works <Icon name="arrow" size={15}/></button></section><section className="estimate-grid"><article className={`score-card ${ai.tone}`}><div className="score-card-head"><span>Current estimate</span><Icon name="sparkles" size={18}/></div><div className="score-content"><div className="score-ring" style={{"--score":`${selected.score * 3.6}deg`} as React.CSSProperties}><div><strong>{selected.score}</strong><span>/100</span></div></div><div><h4>{selected.status}</h4><p>{ai.copy}</p></div></div><div className="score-foot"><span>Based on tasks, activity & feedback</span><button onClick={handleAskDetails}>View details <Icon name="arrow" size={14}/></button></div></article><article className="signals-card"><div className="card-title"><div><span className="eyebrow">KEY SIGNALS</span><h3>What’s driving this</h3></div><div style={{position:'relative'}}><button className="more-button" onClick={() => setShowSignalsMenu(!showSignalsMenu)}><Icon name="dots" size={18}/></button>
+            {tab === "Overview" && <><section className="section-topline"><div><span className="eyebrow">ONBOARDING HEALTH</span><h3>Milestone progress</h3></div><button className="text-button" onClick={() => setActiveModal("how-it-works")}>How it works <Icon name="arrow" size={15}/></button></section><section className="estimate-grid"><article className={`score-card ${ai.tone}`}><div className="score-card-head"><span>Overall health</span><Icon name="sparkles" size={18}/></div><div className="score-content"><div className="score-ring" style={{"--score":`${progress * 3.6}deg`} as React.CSSProperties}><div><strong>{progress}</strong><span>%</span></div></div><div><h4>{selected.status}</h4><p>{ai.copy}</p></div></div><div className="score-foot"><span>Based on tasks, activity & feedback</span><button onClick={handleAskDetails}>View details <Icon name="arrow" size={14}/></button></div></article><article className="signals-card"><div className="card-title"><div><span className="eyebrow">KEY SIGNALS</span><h3>What’s driving this</h3></div><div style={{position:'relative'}}><button className="more-button" onClick={() => setShowSignalsMenu(!showSignalsMenu)}><Icon name="dots" size={18}/></button>
               <AnimatePresence>
                 {showSignalsMenu && (
                   <motion.div initial={{opacity:0, scale:0.95}} animate={{opacity:1, scale:1}} exit={{opacity:0, scale:0.95}} className="dropdown-menu" style={{position:'absolute', top:'100%', right:0, marginTop:'4px', background:'#fff', border:'1px solid #e2e8f0', borderRadius:'8px', minWidth:'180px', boxShadow:'0 4px 12px rgba(0,0,0,0.1)', zIndex:100, padding:'4px', display:'flex', flexDirection:'column'}}>
@@ -403,65 +406,9 @@ export default function Home() {
     </>
     )}
 
-    {currentView === 'grid' && (
-      <section style={{flex: 1, padding: '40px', overflowY: 'auto'}}>
-        <div className="section-topline">
-          <div><span className="eyebrow">OVERVIEW</span><h1 style={{fontSize:'24px',margin:0,color:'var(--ink)'}}>Team Grid</h1></div>
-        </div>
-        <div className="grid-view" style={{marginTop:'24px'}}>
-          {people.map(p => (
-            <div key={p.id} className="grid-card" onClick={() => {setSelectedId(p.id); setCurrentView('people');}}>
-              <div style={{display:'flex', justifyContent:'space-between', marginBottom:'16px'}}>
-                <span className="avatar" style={{backgroundColor:p.color}}>{p.initials}</span>
-                <span className={`status-pill ${estimation[p.status]?.tone || 'support'}`}>{p.status}</span>
-              </div>
-              <h3 style={{margin:'0 0 4px'}}>{p.name}</h3>
-              <p style={{margin:0, fontSize:'12px', color:'var(--muted)'}}>{p.role}</p>
-              <div style={{marginTop:'20px', display:'flex', justifyContent:'space-between', fontSize:'11px', color:'var(--muted)', borderTop:'1px solid var(--panel-border)', paddingTop:'12px'}}>
-                <span>{p.remaining} days remaining</span>
-                <strong>{p.score}/100</strong>
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
-    )}
-
-    {currentView === 'tasks' && (
-      <section style={{flex: 1, padding: '40px', overflowY: 'auto'}}>
-        <div className="section-topline">
-          <div><span className="eyebrow">ALL TASKS</span><h1 style={{fontSize:'24px',margin:0,color:'var(--ink)'}}>Consolidated Backlog</h1></div>
-        </div>
-        <div className="tasks-card full-card" style={{marginTop:'24px', maxWidth:'900px'}}>
-          {people.flatMap(p => p.tasks).map((t, i) => <TaskRow task={t} key={i}/>)}
-        </div>
-      </section>
-    )}
-
-    {currentView === 'chart' && (
-      <section style={{flex: 1, padding: '40px', overflowY: 'auto'}}>
-        <div className="section-topline">
-          <div><span className="eyebrow">REPORTS</span><h1 style={{fontSize:'24px',margin:0,color:'var(--ink)'}}>AI Performance Stats</h1></div>
-        </div>
-        <div className="chart-view" style={{marginTop:'24px', maxWidth:'1000px'}}>
-          <div className="stat-card">
-            <div className="stat-label">Avg Team Score</div>
-            <div className="stat-value">{Math.round(people.reduce((sum, p) => sum + p.score, 0) / (people.length || 1))}</div>
-            <div style={{fontSize:'12px', color:'var(--muted)'}}>Out of 100</div>
-          </div>
-          <div className="stat-card">
-            <div className="stat-label">Above & Beyond</div>
-            <div className="stat-value">{Math.round((people.filter(p => p.status === 'Above & beyond').length / (people.length || 1)) * 100)}%</div>
-            <div style={{fontSize:'12px', color:'var(--muted)'}}>Of all employees</div>
-          </div>
-          <div className="stat-card">
-            <div className="stat-label">Total Events</div>
-            <div className="stat-value">{dbEvents.length > 0 ? dbEvents.length + 42 : 42}</div>
-            <div style={{fontSize:'12px', color:'var(--muted)'}}>Captured silently</div>
-          </div>
-        </div>
-      </section>
-    )}
+    {currentView === 'grid' && <GridView people={people} setSelectedId={setSelectedId} setCurrentView={setCurrentView} />}
+    {currentView === 'tasks' && <TasksView people={people} />}
+    {currentView === 'chart' && <ChartView people={people} dbEvents={dbEvents} />}
     
     <AnimatePresence>
       {activeModal && (
@@ -538,6 +485,6 @@ export default function Home() {
   </main>;
 }
 
-function Signal({icon,color,title,body,impact}:{icon:string;color:string;title:string;body:string;impact:string}) { return <div><span className={`signal-icon ${color}`}><Icon name={icon} size={16}/></span><p><strong>{title}</strong><small>{body}</small></p><b className={impact === "—" ? "neutral" : "positive"}>{impact}</b></div>; }
-function TaskRow({task}:{task:Task}) { return <div className="task-row"><div className="task-main"><span className={`task-check ${task.progress===100?"done":""}`}>{task.progress===100&&<Icon name="check" size={13}/>}</span><div><strong>{task.title}</strong><small>{task.detail}</small></div></div><div className="task-progress"><div className="mini-bar"><i style={{width:`${task.progress}%`}}/></div><span>{task.progress}%</span></div><div className={`task-status ${task.progress===100?"complete":""}`}>{task.status}</div><small className="due">{task.due}</small><button className="more-button"><Icon name="dots" size={17}/></button></div>; }
-function ActivityRow({activity}:{activity:Activity}) { const icons={mail:"mail",upload:"upload",task:"check",comment:"message"}; return <div className="activity-row"><span className={`activity-icon ${activity.type}`}><Icon name={icons[activity.type]} size={16}/></span><div><strong>{activity.text}</strong><small>{activity.meta}</small></div><time>{activity.time}</time></div>; }
+export function Signal({icon,color,title,body,impact}:{icon:string;color:string;title:string;body:string;impact:string}) { return <div><span className={`signal-icon ${color}`}><Icon name={icon} size={16}/></span><p><strong>{title}</strong><small>{body}</small></p><b className={impact === "—" ? "neutral" : "positive"}>{impact}</b></div>; }
+export function TaskRow({task}:{task:Task}) { return <div className="task-row"><div className="task-main"><span className={`task-check ${task.progress===100?"done":""}`}>{task.progress===100&&<Icon name="check" size={13}/>}</span><div><strong>{task.title}</strong><small>{task.detail}</small></div></div><div className="task-progress"><div className="mini-bar"><i style={{width:`${task.progress}%`}}/></div><span>{task.progress}%</span></div><div className={`task-status ${task.progress===100?"complete":""}`}>{task.status}</div><small className="due">{task.due}</small><button className="more-button"><Icon name="dots" size={17}/></button></div>; }
+export function ActivityRow({activity}:{activity:Activity}) { const icons={mail:"mail",upload:"upload",task:"check",comment:"message"}; return <div className="activity-row"><span className={`activity-icon ${activity.type}`}><Icon name={icons[activity.type]} size={16}/></span><div><strong>{activity.text}</strong><small>{activity.meta}</small></div><time>{activity.time}</time></div>; }
