@@ -262,14 +262,14 @@ export default function Home() {
     {currentView === 'people' && (
       <>
       <section className="staff-panel">
-      <div className="panel-heading"><div><span className="eyebrow">WORKSPACE</span><h1>Probation</h1></div><button className="avatar user-avatar" onClick={() => setActiveModal("settings")}>KT</button></div>
+      <div className="panel-heading"><div><span className="eyebrow">WORKSPACE</span><h1 style={{display:'flex', alignItems:'center', gap:'8px'}}><Icon name="sparkles" size={24} style={{color:'var(--brand-color)'}}/> Probation</h1></div><button className="avatar user-avatar" style={{padding:0, overflow:'hidden'}} onClick={() => setActiveModal("settings")}><img src="https://api.dicebear.com/7.x/notionists/svg?seed=Admin" alt="Admin" style={{width:'100%', height:'100%', borderRadius:'50%'}}/></button></div>
       <div className="staff-toolbar"><label className="search-field"><Icon name="search" size={16}/><input value={query} onChange={e => setQuery(e.target.value)} placeholder="Search people" /></label><button className="icon-button" onClick={() => {setSortAsc(!sortAsc); notify(sortAsc ? "Sorted Z-A" : "Sorted A-Z")}}><Icon name="filter" size={17}/></button></div>
       <div className="staff-subheader"><span>ON PROBATION</span><span>{people.length} people</span></div>
       <div className="staff-list">
         <AnimatePresence>
           {shown.map(p => (
             <motion.button initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0 }} layout key={p.id} className={`staff-row ${selected.id === p.id ? "selected" : ""}`} onClick={() => {setSelectedId(p.id); setTab("Overview");}}>
-              <span className="avatar" style={{backgroundColor:p.color}}>{p.initials}</span>
+              <img src={`https://api.dicebear.com/7.x/notionists/svg?seed=${p.name}`} className="avatar" style={{backgroundColor:p.color}} alt={p.name} />
               <span className="staff-copy"><strong>{p.name}</strong><small>{p.role}</small></span>
               {p.status === "Needs support" && <span className="attention-dot"/>}
             </motion.button>
@@ -313,14 +313,14 @@ export default function Home() {
               )}
             </AnimatePresence>
           </div>
-          <button className="avatar profile-avatar" onClick={() => setActiveModal("settings")}>KT</button>
+          <button className="avatar profile-avatar" style={{padding:0, overflow:'hidden'}} onClick={() => setActiveModal("settings")}><img src="https://api.dicebear.com/7.x/notionists/svg?seed=Admin" alt="Admin" style={{width:'100%', height:'100%', borderRadius:'50%'}}/></button>
         </div>
       </header>
       
       <div className="content-wrap">
         <motion.div key={selected.id} initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
           <section className="profile-header">
-            <div className="profile-title"><span className="large-avatar" style={{backgroundColor:selected.color}}>{selected.initials}</span><div><div className="title-row"><h2>{selected.name}</h2><span className={`status-pill ${ai.tone}`}>{selected.status}</span></div><p>{selected.role} <span>·</span> {selected.department}</p></div></div>
+            <div className="profile-title"><img src={`https://api.dicebear.com/7.x/notionists/svg?seed=${selected.name}`} className="large-avatar" style={{backgroundColor:selected.color}} alt={selected.name} /><div><div className="title-row"><h2>{selected.name}</h2><span className={`status-pill ${ai.tone}`}>{selected.status}</span></div><p>{selected.role} <span>·</span> {selected.department}</p></div></div>
             <div style={{position:'relative'}}>
               <button className="more-button" onClick={() => setShowProfileMenu(!showProfileMenu)}><Icon name="dots" size={20}/></button>
               <AnimatePresence>

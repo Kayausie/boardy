@@ -37,7 +37,7 @@ html.dark {
   --modal-overlay: rgba(0,0,0,0.7);
 }
 * { box-sizing:border-box; }
-body { margin:0; background:var(--canvas); color:var(--ink); font-family:Arial,Helvetica,sans-serif; }
+body { margin:0; background:var(--canvas); color:var(--ink); font-family:var(--font-sans), Arial, Helvetica, sans-serif; }
 button,input,select { font:inherit; } button { cursor:pointer; }
 .app-shell { min-height:100vh; display:flex; background:var(--canvas); }
 .side-rail { width:72px; background:var(--sidebar-bg); color:var(--sidebar-text); display:flex; flex-direction:column; align-items:center; padding:22px 0; flex-shrink:0; }

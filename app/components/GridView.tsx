@@ -16,7 +16,7 @@ export default function GridView({ people, setSelectedId, setCurrentView }: { pe
         {people.map(p => (
           <div key={p.id} className="grid-card" onClick={() => {setSelectedId(p.id); setCurrentView('people');}}>
             <div style={{display:'flex', justifyContent:'space-between', marginBottom:'16px'}}>
-              <span className="avatar" style={{backgroundColor:p.color}}>{p.initials}</span>
+              <img src={`https://api.dicebear.com/7.x/notionists/svg?seed=${p.name}`} className="avatar" style={{backgroundColor:p.color}} alt={p.name} />
               <span className={`status-pill ${estimation[p.status as keyof typeof estimation]?.tone || 'support'}`}>{p.status}</span>
             </div>
             <h3 style={{margin:'0 0 4px'}}>{p.name}</h3>
