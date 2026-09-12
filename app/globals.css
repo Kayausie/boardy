@@ -1,39 +1,42 @@
 @import "tailwindcss";
 
 :root {
-  --ink: #2b2622; --muted: #827568; --line: #e8e3dc; --canvas: #fcfbf9;
+  --ink: #2c2f2c; --muted: #737c73; --line: #e2e5e1; --canvas: #f6f7f5;
   --panel-bg: #ffffff;
   --panel-border: var(--line);
-  --brand-gradient: linear-gradient(135deg, #a68a6b, #8c7355);
-  --brand-color: #8c7355;
-  --sidebar-bg: #36302a;
-  --sidebar-text: #b5a898;
-  --sidebar-active: #8c7355;
-  --hover-bg: #f5f3ef;
+  --brand-gradient: linear-gradient(135deg, #8c9c8a, #687965);
+  --brand-color: #687965;
+  --sidebar-bg: #2a2e2a;
+  --sidebar-text: #9ba49b;
+  --sidebar-active: #687965;
+  --hover-bg: #eaede9;
   --input-bg: #ffffff;
   --input-border: var(--line);
-  --input-text: #524a41;
+  --input-text: #454a45;
   --card-bg: #ffffff;
-  --banner-bg: linear-gradient(102deg, #fcfaf8, #f5f3ed);
-  --banner-border: #e6dfd3;
+  --banner-bg: linear-gradient(102deg, #f4f6f3, #eaf0ea);
+  --banner-border: #d4d8d3;
   --modal-bg: #ffffff;
-  --modal-overlay: #26221e68;
+  --modal-overlay: rgba(30, 34, 30, 0.4);
 }
 
 html.dark {
-  --ink: #e8e3dc; --muted: #9c9183; --line: #4a4239; --canvas: #1c1916;
-  --panel-bg: #26221e;
-  --panel-border: #4a4239;
-  --sidebar-bg: #141210;
-  --sidebar-text: #9c9183;
-  --hover-bg: #36302a;
-  --input-bg: #1c1916;
-  --input-border: #524a41;
-  --input-text: #e8e3dc;
-  --card-bg: #26221e;
-  --banner-bg: linear-gradient(102deg, #2b2622, #36302a);
-  --banner-border: #524a41;
-  --modal-bg: #26221e;
+  --ink: #e2e8f0; --muted: #94a3b8; --line: #334155; --canvas: #0f172a;
+  --panel-bg: #1e293b;
+  --panel-border: #334155;
+  --brand-gradient: linear-gradient(135deg, #94a3b8, #475569);
+  --brand-color: #64748b;
+  --sidebar-bg: #0b0f19;
+  --sidebar-text: #64748b;
+  --sidebar-active: #475569;
+  --hover-bg: #334155;
+  --input-bg: #0f172a;
+  --input-border: #475569;
+  --input-text: #f1f5f9;
+  --card-bg: #1e293b;
+  --banner-bg: linear-gradient(102deg, #1e293b, #0f172a);
+  --banner-border: #475569;
+  --modal-bg: #1e293b;
   --modal-overlay: rgba(0,0,0,0.7);
 }
 * { box-sizing:border-box; }
