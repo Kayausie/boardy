@@ -291,7 +291,7 @@ export default function Home() {
           <button onClick={handleSimulateWebhook} style={{border:'1px dashed var(--brand-color)',background:'transparent',color:'var(--brand-color)',padding:'8px 12px',borderRadius:'8px',fontSize:'12px',fontWeight:'bold',cursor:'pointer',display:'flex',gap:'6px',alignItems:'center'}}>
             <Icon name="zap" size={14}/> Simulate Webhook
           </button>
-          <button onClick={handleGenerateSummary} disabled={isGenerating} style={{border:'0',background:'var(--brand-color)',color:'#fff',padding:'8px 12px',borderRadius:'8px',fontSize:'12px',fontWeight:'bold',cursor:'pointer'}}>
+          <button onClick={handleGenerateSummary} disabled={isGenerating} style={{border:'0',background:'var(--brand-color)',color:'#fff',padding:'8px 0',borderRadius:'8px',fontSize:'12px',fontWeight:'bold',cursor:'pointer',width:'135px',textAlign:'center'}}>
             {isGenerating ? "Generating..." : `${viewRole} Summary`}
           </button>
           <div style={{position:'relative'}}>
