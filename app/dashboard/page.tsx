@@ -80,7 +80,7 @@ export default function Home() {
 
   const [selectedId, setSelectedId] = useState(1); 
   const [query, setQuery] = useState(""); 
-  const [tab, setTab] = useState<"Overview" | "Tasks" | "Activity" | "AI Buddy">("Overview"); 
+  const [tab, setTab] = useState<"Overview" | "Tasks" | "Activity">("Overview"); 
   const [modal, setModal] = useState(false);
   const [currentView, setCurrentView] = useState<"grid" | "people" | "tasks" | "chart">("people");
   const [activeModal, setActiveModal] = useState<"settings" | "how-it-works" | null>(null);
@@ -95,6 +95,7 @@ export default function Home() {
   
   const [chatMessages, setChatMessages] = useState([{ role: "assistant", content: "Hi, I'm your AI Assessment Assistant. I can analyze employee progress, activities, and identify blockers. What would you like to know?" }]);
   const [messageInput, setMessageInput] = useState("");
+  const [showChat, setShowChat] = useState(false);
   
   const [newStaff, setNewStaff] = useState({ name: "", dept: "", role: "", date: "" });
 
@@ -134,7 +135,7 @@ export default function Home() {
       const data = await res.json();
       if (data.success) {
         setChatMessages(prev => [...prev, { role: "assistant", content: `**${viewRole} Summary for ${selected.name}:**\n\n${data.summary}` }]);
-        setTab("AI Buddy");
+        setShowChat(true);
         notify(`${viewRole} summary generated!`);
       } else {
         notify("Error: " + data.error);
@@ -175,7 +176,7 @@ export default function Home() {
   };
 
   const handleAskDetails = async () => {
-    setTab("AI Buddy");
+    setShowChat(true);
     const queryMsg = "Please explain the details behind the current AI Performance Estimate (Score and Status). What factors contributed to this?";
     const newMessages = [...chatMessages, { role: "user", content: queryMsg }];
     setChatMessages(newMessages);
@@ -357,7 +358,7 @@ export default function Home() {
         </motion.div>
 
         <div className="tabs" role="tablist">
-          {(["Overview","Tasks","Activity","AI Buddy"] as const).map(name => (
+          {(["Overview","Tasks","Activity"] as const).map(name => (
             <button key={name} className={tab===name?"active":""} onClick={() => setTab(name as any)}>
               {name}{name === "Tasks" && <span>{selected.tasks.length}</span>}{name === "Activity" && <span>{dbEvents.length}</span>}
             </button>
@@ -381,38 +382,6 @@ export default function Home() {
             
             {tab === "Activity" && <section className="activity-card full-card">{dbEvents.length === 0 ? <div style={{padding:'20px',color:'#777'}}>No events recorded yet.</div> : dbEvents.map((ev: any) => <DbActivityRow event={ev} key={ev.id}/>)}</section>}
             
-            {tab === "AI Buddy" && (
-              <section className="tasks-card full-card" style={{padding:'20px', display:'flex', flexDirection:'column', gap:'16px', minHeight:'400px'}}>
-                <div style={{flex:1, overflowY:'auto', display:'flex', flexDirection:'column', gap:'16px', paddingRight:'10px'}}>
-                  {chatMessages.map((msg, i) => (
-                    <motion.div initial={{opacity:0, y:5}} animate={{opacity:1, y:0}} key={i} style={{alignSelf: msg.role === 'user' ? 'flex-end' : 'flex-start', background: msg.role === 'user' ? 'var(--hover-bg)' : 'var(--input-bg)', padding:'12px 16px', borderRadius:'10px', maxWidth:'85%', fontSize:'13px', lineHeight:'1.6', color:'var(--ink)', border:'1px solid var(--input-border)'}}>
-                      <strong style={{display:'block', marginBottom:'6px', color: msg.role === 'user' ? 'var(--brand-color)' : 'var(--ink)'}}>{msg.role === 'user' ? 'You' : 'AI Assistant'}</strong>
-                      {msg.role === 'assistant' ? (
-                        <ReactMarkdown components={{
-                          p: ({node, ...props}) => <p style={{margin: '0 0 8px 0'}} {...props} />,
-                          ul: ({node, ...props}) => <ul style={{margin: '0 0 8px 0', paddingLeft: '20px'}} {...props} />,
-                          li: ({node, ...props}) => <li style={{marginBottom: '4px'}} {...props} />,
-                          strong: ({node, ...props}) => <strong style={{fontWeight: 700}} {...props} />,
-                        }}>{msg.content}</ReactMarkdown>
-                      ) : (
-                        msg.content
-                      )}
-                    </motion.div>
-                  ))}
-                  {isGenerating && (
-                    <motion.div initial={{opacity:0}} animate={{opacity:1}} style={{alignSelf: 'flex-start', background: '#f7f7fb', padding:'12px 16px', borderRadius:'10px', display:'flex', gap:'4px'}}>
-                      <motion.span animate={{y:[0,-5,0]}} transition={{repeat:Infinity, duration:0.6, delay:0}} style={{width:6,height:6,background:'#aaa',borderRadius:'50%',display:'block'}}/>
-                      <motion.span animate={{y:[0,-5,0]}} transition={{repeat:Infinity, duration:0.6, delay:0.2}} style={{width:6,height:6,background:'#aaa',borderRadius:'50%',display:'block'}}/>
-                      <motion.span animate={{y:[0,-5,0]}} transition={{repeat:Infinity, duration:0.6, delay:0.4}} style={{width:6,height:6,background:'#aaa',borderRadius:'50%',display:'block'}}/>
-                    </motion.div>
-                  )}
-                </div>
-                <div style={{display:'flex', gap:'8px', marginTop:'auto'}}>
-                  <input type="text" value={messageInput} onChange={e => setMessageInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleSendMessage()} disabled={isGenerating} placeholder="Ask something..." style={{flex:1, padding:'12px', borderRadius:'8px', border:'1px solid #dedee8', fontSize:'13px'}} />
-                  <button onClick={handleSendMessage} disabled={isGenerating} style={{background:'var(--brand-color)', color:'#fff', border:'0', padding:'0 20px', borderRadius:'8px', fontSize:'13px', fontWeight:'bold', cursor: isGenerating ? 'not-allowed' : 'pointer'}}>Send</button>
-                </div>
-              </section>
-            )}
           </motion.div>
         </AnimatePresence>
       </div>
@@ -502,6 +471,51 @@ export default function Home() {
       {toast && (
         <motion.div initial={{opacity:0, y:20}} animate={{opacity:1, y:0}} exit={{opacity:0, y:20}} className="toast">
           <Icon name="check" size={16}/>{toast}
+        </motion.div>
+      )}
+    </AnimatePresence>
+
+    {/* Floating Chat Widget */}
+    <div className="floating-chat-btn metallic-bg" onClick={() => setShowChat(!showChat)}>
+      <Icon name={showChat ? "plus" : "sparkles"} size={24} style={{ transform: showChat ? 'rotate(45deg)' : 'none', transition: '0.3s' }}/>
+    </div>
+
+    <AnimatePresence>
+      {showChat && (
+        <motion.div initial={{opacity:0, y:20, scale:0.95}} animate={{opacity:1, y:0, scale:1}} exit={{opacity:0, y:20, scale:0.95}} transition={{duration:0.2}} className="floating-chat-window apple-glass">
+          <div className="chat-header">
+            <h3><Icon name="sparkles" size={18} style={{color:'var(--brand-color)'}}/> AI Buddy</h3>
+            <button style={{background:'transparent', border:0, cursor:'pointer', color:'var(--muted)'}} onClick={() => setShowChat(false)}><Icon name="dots" size={18}/></button>
+          </div>
+          
+          <div className="chat-body" style={{background:'transparent'}}>
+            {chatMessages.map((msg, i) => (
+              <motion.div initial={{opacity:0, y:5}} animate={{opacity:1, y:0}} key={i} className={`chat-msg ${msg.role === 'user' ? 'user' : 'ai'}`}>
+                {msg.role === 'assistant' ? (
+                  <ReactMarkdown components={{
+                    p: ({node, ...props}) => <p style={{margin: '0 0 8px 0'}} {...props} />,
+                    ul: ({node, ...props}) => <ul style={{margin: '0 0 8px 0', paddingLeft: '20px'}} {...props} />,
+                    li: ({node, ...props}) => <li style={{marginBottom: '4px'}} {...props} />,
+                    strong: ({node, ...props}) => <strong style={{fontWeight: 700}} {...props} />,
+                  }}>{msg.content}</ReactMarkdown>
+                ) : (
+                  msg.content
+                )}
+              </motion.div>
+            ))}
+            {isGenerating && (
+              <motion.div initial={{opacity:0}} animate={{opacity:1}} className="chat-msg ai" style={{display:'flex', flexDirection:'row', gap:'4px', alignItems:'center', padding:'16px'}}>
+                <motion.span animate={{y:[0,-5,0]}} transition={{repeat:Infinity, duration:0.6, delay:0}} style={{width:6,height:6,background:'#aaa',borderRadius:'50%',display:'block'}}/>
+                <motion.span animate={{y:[0,-5,0]}} transition={{repeat:Infinity, duration:0.6, delay:0.2}} style={{width:6,height:6,background:'#aaa',borderRadius:'50%',display:'block'}}/>
+                <motion.span animate={{y:[0,-5,0]}} transition={{repeat:Infinity, duration:0.6, delay:0.4}} style={{width:6,height:6,background:'#aaa',borderRadius:'50%',display:'block'}}/>
+              </motion.div>
+            )}
+          </div>
+
+          <div className="chat-input-area apple-glass">
+            <input type="text" value={messageInput} onChange={e => setMessageInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleSendMessage()} disabled={isGenerating} placeholder="Ask about this employee..." />
+            <button onClick={handleSendMessage} disabled={isGenerating} className="metallic-bg"><Icon name="arrow" size={16} style={{transform:'rotate(90deg)'}}/></button>
+          </div>
         </motion.div>
       )}
     </AnimatePresence>
