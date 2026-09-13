@@ -28,11 +28,19 @@ export async function POST(req: NextRequest) {
       ORDER BY timestamp DESC
     ` as any[];
 
+    const tasks = await sql`
+      SELECT title, detail, progress, status, due_date
+      FROM tasks WHERE user_id = ${Number(userId)} ORDER BY due_date NULLS LAST, id
+    ` as any[];
+
     // Build the event context string
     const eventsContext = events.map((e: any) => {
       const payload = JSON.parse(e.payload || "{}");
       return `[${e.timestamp}] ${e.event_type}: ${e.description} | Metadata: ${JSON.stringify(payload)}`;
     }).join("\n");
+    const tasksContext = tasks.map((task: any) =>
+      `- ${task.title}: ${task.progress}% (${task.status})${task.due_date ? ` · due ${task.due_date}` : ""}`
+    ).join("\n");
 
     // Build role-specific prompt
     let prompt: string;
@@ -48,6 +56,9 @@ Employee Profile:
 - Days Remaining in Probation: ${user.remaining}
 - Current AI Score: ${user.score}/100
 - Status: ${user.status}
+
+Assigned Tasks:
+${tasksContext || "No assigned tasks recorded."}
 
 Recent Activity Log (from integrated tools):
 ${eventsContext || "No recent activity recorded."}
@@ -71,6 +82,9 @@ Employee Profile:
 - Days Remaining in Probation: ${user.remaining}
 - Current AI Score: ${user.score}/100
 - Status: ${user.status}
+
+Assigned Tasks:
+${tasksContext || "No assigned tasks recorded."}
 
 Recent Activity Log (from integrated tools):
 ${eventsContext || "No recent activity recorded."}

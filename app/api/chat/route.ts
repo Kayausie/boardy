@@ -23,6 +23,9 @@ export async function POST(req: NextRequest) {
     const pastSummaries = userId
       ? await sql`SELECT * FROM summaries WHERE user_id = ${Number(userId)} ORDER BY created_at DESC LIMIT 5` as any[]
       : [];
+    const tasks = userId
+      ? await sql`SELECT title, detail, progress, status, due_date FROM tasks WHERE user_id = ${Number(userId)} ORDER BY due_date NULLS LAST, id` as any[]
+      : [];
 
     // Build RAG context
     const eventsContext = events.map((e: any) => {
@@ -33,6 +36,9 @@ export async function POST(req: NextRequest) {
     const summariesContext = pastSummaries.map((s: any) =>
       `[${s.created_at}] ${s.role} Summary:\n${s.content}`
     ).join("\n\n");
+    const tasksContext = tasks.map((t: any) =>
+      `- ${t.title}: ${t.progress}% (${t.status})${t.due_date ? ` · due ${t.due_date}` : ""}`
+    ).join("\n");
 
     let systemPrompt = `You are OnboardPilot (Boardy), an AI Assistant for HR and Senior Leaders/Managers. 
 You help them analyze their new employees' onboarding progress, identify blockers, and suggest management actions.
@@ -49,6 +55,10 @@ Start Date: ${user.start_date}
 Probation Days Remaining: ${user.remaining}
 AI Performance Score: ${user.score}/100
 Current Status: ${user.status}`;
+    }
+
+    if (tasksContext) {
+      systemPrompt += `\n\n═══ ASSIGNED TASKS ═══\n${tasksContext}`;
     }
 
     if (eventsContext) {

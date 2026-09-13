@@ -1,12 +1,28 @@
 import { getSql, initializeDatabase } from "@/lib/db";
+import { ensureDemoTasks, getTasksForUsers } from "@/lib/tasks";
 import { NextRequest, NextResponse } from "next/server";
 
 // GET /api/users - Fetch all users
 export async function GET() {
   try {
     await initializeDatabase();
+    await ensureDemoTasks();
     const users = await getSql()`SELECT * FROM users ORDER BY id`;
-    return NextResponse.json({ success: true, users });
+    const tasks = await getTasksForUsers(users.map((user) => Number(user.id)));
+    const usersWithTasks = users.map((user) => {
+      const userTasks = tasks.filter((task) => Number(task.user_id) === Number(user.id));
+      const overallProgress = userTasks.length
+        ? Math.round(userTasks.reduce((sum, task) => sum + Number(task.progress), 0) / userTasks.length)
+        : 0;
+      return {
+        ...user,
+        tasks: userTasks,
+        overall_progress: overallProgress,
+        completed_tasks: userTasks.filter((task) => Number(task.progress) === 100).length,
+        task_count: userTasks.length,
+      };
+    });
+    return NextResponse.json({ success: true, users: usersWithTasks });
   } catch (error: any) {
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });
   }

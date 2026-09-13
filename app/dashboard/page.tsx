@@ -8,7 +8,7 @@ import TasksView from '../components/TasksView';
 import ChartView from '../components/ChartView';
 
 type Activity = { type: "mail" | "upload" | "task" | "comment"; text: string; meta: string; time: string };
-type Task = { title: string; detail: string; progress: number; status: string; due: string };
+type Task = { id?: number; title: string; detail: string; progress: number; status: string; due: string };
 type Person = { id: number; name: string; initials: string; role: string; department: string; start: string; remaining: number; score: number; status: "Above & beyond" | "Well done" | "Needs support"; color: string; tasks: Task[]; activities: Activity[] };
 
 const initialPeople: Person[] = [
@@ -35,6 +35,28 @@ const initialPeople: Person[] = [
   { id: 4, name: "Marcus Lee", initials: "ML", role: "Account Executive", department: "Sales", start: "02 Sep 2026", remaining: 45, score: 58, status: "Needs support", color: "#d5f0df", tasks: [{ title: "Complete CRM discovery notes", detail: "Sales · Pipeline", progress: 45, status: "In progress", due: "Due Sep 16" }, { title: "Deliver product knowledge assessment", detail: "Training", progress: 20, status: "In progress", due: "Due Sep 19" }], activities: [{ type: "mail", text: "Opened sales enablement resources", meta: "Training series · 3 documents", time: "Yesterday, 1:24 PM" }, { type: "comment", text: "Asked a question in the onboarding channel", meta: "#sales-onboarding", time: "Monday, 3:02 PM" }] },
   { id: 5, name: "Sofia Nguyen", initials: "SN", role: "Marketing Associate", department: "Marketing", start: "09 Sep 2026", remaining: 52, score: 83, status: "Above & beyond", color: "#ffe1eb", tasks: [{ title: "Prepare Q4 campaign brief", detail: "Marketing · Campaigns", progress: 68, status: "In progress", due: "Due Sep 26" }, { title: "Compile social performance report", detail: "Marketing · Reporting", progress: 100, status: "Complete", due: "Completed Sep 9" }], activities: [{ type: "upload", text: "Uploaded the August social report", meta: "Growth drive", time: "Today, 9:02 AM" }, { type: "task", text: "Completed social performance report", meta: "2 days ahead of schedule", time: "Yesterday, 4:34 PM" }] },
 ];
+
+function mapDatabaseUser(u: any): Person {
+  const tasks = Array.isArray(u.tasks) ? u.tasks.map((task: any) => {
+    const dueDate = task.due_date ? new Date(`${task.due_date}T00:00:00`) : null;
+    return {
+      id: Number(task.id),
+      title: task.title,
+      detail: task.detail || "",
+      progress: Number(task.progress) || 0,
+      status: task.status || "In progress",
+      due: dueDate
+        ? `${task.status === "Complete" ? "Completed" : "Due"} ${dueDate.toLocaleDateString("en-US", { month: "short", day: "numeric" })}`
+        : "No due date",
+    };
+  }) : [];
+  return {
+    id: Number(u.id), name: u.name, initials: u.initials, role: u.role,
+    department: u.department, start: u.start_date, remaining: Number(u.remaining),
+    score: Number(u.score) || 0, status: u.status as Person["status"], color: u.color,
+    tasks, activities: []
+  };
+}
 
 const iconPaths: Record<string, React.ReactNode> = {
   grid: <><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></>,
@@ -65,12 +87,7 @@ export default function Home() {
   useEffect(() => {
     const loadUsers = () => fetch("/api/users").then(r => r.json()).then(data => {
       if (data.success && data.users.length > 0) {
-        setPeople(data.users.map((u: any) => ({
-          id: u.id, name: u.name, initials: u.initials, role: u.role,
-          department: u.department, start: u.start_date, remaining: u.remaining,
-          score: u.score, status: u.status as any, color: u.color,
-          tasks: [], activities: []
-        })));
+        setPeople(data.users.map(mapDatabaseUser));
       }
     }).catch(() => {});
     loadUsers();
@@ -119,7 +136,14 @@ export default function Home() {
   }, [selected?.id]);
 
   const ai = estimation[selected?.status] || estimation["Needs support"]; 
-  const progress = Math.round((90 - (selected?.remaining || 60)) / 90 * 100);
+  const taskProgress = selected?.tasks?.length
+    ? Math.round(selected.tasks.reduce((sum, task) => sum + task.progress, 0) / selected.tasks.length)
+    : null;
+  const completedTasks = selected?.tasks?.filter((task) => task.progress === 100).length || 0;
+  const progress = taskProgress ?? Math.round((90 - (selected?.remaining || 60)) / 90 * 100);
+  const performanceCopy = selected?.tasks?.length
+    ? `${completedTasks} of ${selected.tasks.length} assigned tasks complete; average task progress is ${taskProgress}%. ${ai.copy}`
+    : ai.copy;
   const notify = (text: string) => { setToast(text); window.setTimeout(() => setToast(""), 2800); };
 
   const handleGenerateSummary = async () => {
@@ -246,12 +270,7 @@ export default function Home() {
         const usersRes = await fetch("/api/users");
         const usersData = await usersRes.json();
         if (usersData.success) {
-          setPeople(usersData.users.map((u: any) => ({
-            id: u.id, name: u.name, initials: u.initials, role: u.role,
-            department: u.department, start: u.start_date, remaining: u.remaining,
-            score: u.score, status: u.status as any, color: u.color,
-            tasks: [], activities: []
-          })));
+          setPeople(usersData.users.map(mapDatabaseUser));
         }
         // Refresh events
         const evRes = await fetch(`/api/users/${selected.id}/events`);
@@ -366,7 +385,7 @@ export default function Home() {
         
         <AnimatePresence mode="wait">
           <motion.div key={tab} initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -10 }} transition={{ duration: 0.2 }}>
-            {tab === "Overview" && <><section className="section-topline"><div><span className="eyebrow">ONBOARDING HEALTH</span><h3>Milestone progress</h3></div><button className="text-button" onClick={() => setActiveModal("how-it-works")}>How it works <Icon name="arrow" size={15}/></button></section><section className="estimate-grid"><article className={`score-card ${ai.tone}`}><div className="score-card-head"><span>Overall health</span><Icon name="sparkles" size={18}/></div><div className="score-content"><div className="score-ring" style={{"--score":`${progress * 3.6}deg`} as React.CSSProperties}><div><strong>{progress}</strong><span>%</span></div></div><div><h4>{selected.status}</h4><p>{ai.copy}</p></div></div><div className="score-foot"><span>Based on tasks, activity & feedback</span><button onClick={handleAskDetails}>View details <Icon name="arrow" size={14}/></button></div></article><article className="signals-card"><div className="card-title"><div><span className="eyebrow">KEY SIGNALS</span><h3>What’s driving this</h3></div><div style={{position:'relative'}}><button className="more-button" onClick={() => setShowSignalsMenu(!showSignalsMenu)}><Icon name="dots" size={18}/></button>
+            {tab === "Overview" && <><section className="section-topline"><div><span className="eyebrow">ONBOARDING HEALTH</span><h3>Milestone progress</h3></div><button className="text-button" onClick={() => setActiveModal("how-it-works")}>How it works <Icon name="arrow" size={15}/></button></section><section className="estimate-grid"><article className={`score-card ${ai.tone}`}><div className="score-card-head"><span>Overall health</span><Icon name="sparkles" size={18}/></div><div className="score-content"><div className="score-ring" style={{"--score":`${progress * 3.6}deg`} as React.CSSProperties}><div><strong>{progress}</strong><span>%</span></div></div><div><h4>{selected.status}</h4><p>{performanceCopy}</p></div></div><div className="score-foot"><span>Based on tasks, activity & feedback</span><button onClick={handleAskDetails}>View details <Icon name="arrow" size={14}/></button></div></article><article className="signals-card"><div className="card-title"><div><span className="eyebrow">KEY SIGNALS</span><h3>What’s driving this</h3></div><div style={{position:'relative'}}><button className="more-button" onClick={() => setShowSignalsMenu(!showSignalsMenu)}><Icon name="dots" size={18}/></button>
               <AnimatePresence>
                 {showSignalsMenu && (
                   <motion.div initial={{opacity:0, scale:0.95}} animate={{opacity:1, scale:1}} exit={{opacity:0, scale:0.95}} className="dropdown-menu" style={{position:'absolute', top:'100%', right:0, marginTop:'4px', background:'#fff', border:'1px solid #e2e8f0', borderRadius:'8px', minWidth:'180px', boxShadow:'0 4px 12px rgba(0,0,0,0.1)', zIndex:100, padding:'4px', display:'flex', flexDirection:'column'}}>
@@ -375,7 +394,7 @@ export default function Home() {
                   </motion.div>
                 )}
               </AnimatePresence>
-            </div></div><div className="signals"><Signal icon="check" color="purple" title={`${selected.tasks.filter(t => t.progress === 100).length + 4} tasks completed`} body="on or ahead of schedule" impact="+12"/><Signal icon="message" color="blue" title="Responsive collaboration" body="Avg. reply time: 1h 14m" impact="+8"/><Signal icon="clipboard" color="orange" title="Growth opportunity" body="Documentation consistency" impact="—"/></div></article></section><section className="section-topline task-heading"><div><span className="eyebrow">CURRENT WORK</span><h3>Assigned tasks</h3></div><button className="text-button" onClick={() => setTab("Tasks")}>View all tasks <Icon name="arrow" size={15}/></button></section><section className="tasks-card">{selected.tasks.map(t => <TaskRow task={t} key={t.title}/>)}</section><section className="section-topline activity-heading"><div><span className="eyebrow">RECENT ACTIVITY</span><h3>Latest updates</h3></div><button className="text-button" onClick={() => setTab("Activity")}>View activity <Icon name="arrow" size={15}/></button></section><section className="activity-card">{selected.activities.slice(0,3).map((a,i) => <ActivityRow activity={a} key={i}/>)}</section></>}
+            </div></div><div className="signals"><Signal icon="check" color="purple" title={`${completedTasks} of ${selected.tasks.length || 0} tasks complete`} body={taskProgress === null ? "Waiting for task data" : `Average progress ${taskProgress}%`} impact={taskProgress === null ? "—" : "+12"}/><Signal icon="message" color="blue" title={dbEvents.length ? `${dbEvents.length} activity signals` : "Responsive collaboration"} body={dbEvents.length ? "Captured from connected tools" : "Awaiting connected-tool activity"} impact={dbEvents.length ? "+8" : "—"}/><Signal icon="clipboard" color="orange" title={taskProgress !== null && taskProgress < 65 ? "Growth opportunity" : "On track"} body={taskProgress !== null && taskProgress < 65 ? "Focus on the lowest-progress task" : "Task delivery is tracking well"} impact="—"/></div></article></section><section className="section-topline task-heading"><div><span className="eyebrow">CURRENT WORK</span><h3>Assigned tasks</h3></div><button className="text-button" onClick={() => setTab("Tasks")}>View all tasks <Icon name="arrow" size={15}/></button></section><section className="tasks-card">{selected.tasks.map(t => <TaskRow task={t} key={t.title}/>)}</section><section className="section-topline activity-heading"><div><span className="eyebrow">RECENT ACTIVITY</span><h3>Latest updates</h3></div><button className="text-button" onClick={() => setTab("Activity")}>View activity <Icon name="arrow" size={15}/></button></section><section className="activity-card">{selected.activities.slice(0,3).map((a,i) => <ActivityRow activity={a} key={i}/>)}</section></>}
             
             {tab === "Tasks" && <section className="tasks-card full-card">{selected.tasks.length === 0 ? <div style={{padding:'20px',color:'#777'}}>No tasks yet.</div> : selected.tasks.map(t => <TaskRow task={t} key={t.title}/>)}</section>}
             

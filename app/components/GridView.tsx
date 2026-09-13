@@ -23,7 +23,7 @@ export default function GridView({ people, setSelectedId, setCurrentView }: { pe
             <p style={{margin:0, fontSize:'12px', color:'var(--muted)'}}>{p.role}</p>
             <div style={{marginTop:'20px', display:'flex', justifyContent:'space-between', fontSize:'11px', color:'var(--muted)', borderTop:'1px solid var(--panel-border)', paddingTop:'12px'}}>
               <span>{p.remaining} days remaining</span>
-              <strong>{Math.round((90 - (p.remaining || 60)) / 90 * 100)}% complete</strong>
+              <strong>{p.tasks?.length ? `${Math.round(p.tasks.reduce((sum: number, task: any) => sum + task.progress, 0) / p.tasks.length)}% task progress` : `${Math.round((90 - (p.remaining || 60)) / 90 * 100)}% complete`}</strong>
             </div>
           </div>
         ))}
