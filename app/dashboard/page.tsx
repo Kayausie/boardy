@@ -159,7 +159,7 @@ export default function Home() {
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: newMessages, userId: selected.id })
+        body: JSON.stringify({ messages: newMessages, userId: selected.id, viewRole })
       });
       const data = await res.json();
       if (data.success) {
@@ -185,7 +185,7 @@ export default function Home() {
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: newMessages, userId: selected.id })
+        body: JSON.stringify({ messages: newMessages, userId: selected.id, viewRole })
       });
       const data = await res.json();
       if (data.success) {
@@ -482,7 +482,7 @@ export default function Home() {
 
     <AnimatePresence>
       {showChat && (
-        <motion.div initial={{opacity:0, y:20, scale:0.95}} animate={{opacity:1, y:0, scale:1}} exit={{opacity:0, y:20, scale:0.95}} transition={{duration:0.2}} className="floating-chat-window apple-glass">
+        <motion.div initial={{opacity:0, y:20, scale:0.95}} animate={{opacity:1, y:0, scale:1}} exit={{opacity:0, y:20, scale:0.95}} transition={{duration:0.2}} className="floating-chat-window">
           <div className="chat-header">
             <h3><Icon name="sparkles" size={18} style={{color:'var(--brand-color)'}}/> AI Buddy</h3>
             <button style={{background:'transparent', border:0, cursor:'pointer', color:'var(--muted)'}} onClick={() => setShowChat(false)}><Icon name="dots" size={18}/></button>
@@ -512,7 +512,7 @@ export default function Home() {
             )}
           </div>
 
-          <div className="chat-input-area apple-glass">
+          <div className="chat-input-area">
             <input type="text" value={messageInput} onChange={e => setMessageInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleSendMessage()} disabled={isGenerating} placeholder="Ask about this employee..." />
             <button onClick={handleSendMessage} disabled={isGenerating} className="metallic-bg"><Icon name="arrow" size={16} style={{transform:'rotate(90deg)'}}/></button>
           </div>
