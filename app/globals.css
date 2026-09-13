@@ -1,64 +1,71 @@
 @import "tailwindcss";
 
 :root {
-  --ink: #2C2A29; 
-  --ink-light: #736F6C;
-  --muted: #736F6C; 
-  --line: #E6E1DC; 
-  --canvas: #F7F5F2;
+  --ink: #1D1D1F; 
+  --ink-light: #86868B;
+  --muted: #86868B; 
+  --line: #D2D2D7; 
+  --canvas: #F5F5F7;
   --bg-canvas: var(--canvas);
   --panel-bg: #FFFFFF;
   --bg-panel: var(--panel-bg);
   --panel-border: var(--line);
   --border-color: var(--line);
-  --brand-gradient: linear-gradient(135deg, #A39182, #8C7A6B);
-  --brand-color: #8C7A6B;
-  --brand-color-hover: #736254;
-  --brand-color-light: #F0EBE6;
-  --sidebar-bg: #F0EBE6;
-  --sidebar-text: #736F6C;
+  --brand-gradient: linear-gradient(135deg, #0077ED, #0066CC);
+  --brand-color: #0066CC;
+  --brand-color-hover: #0077ED;
+  --brand-color-light: #E8F0FE;
+  --sidebar-bg: #F5F5F7;
+  --sidebar-text: #86868B;
   --sidebar-active: #FFFFFF;
-  --hover-bg: #F0EBE6;
+  --hover-bg: #E8E8ED;
   --input-bg: #FFFFFF;
   --input-border: var(--line);
-  --input-text: #2C2A29;
+  --input-text: #1D1D1F;
   --card-bg: #FFFFFF;
-  --banner-bg: linear-gradient(102deg, #FAF8F6, #F2EFEA);
-  --banner-border: #E6E1DC;
+  --banner-bg: linear-gradient(102deg, #FFFFFF, #F5F5F7);
+  --banner-border: #D2D2D7;
   --modal-bg: #FFFFFF;
-  --modal-overlay: rgba(44, 42, 41, 0.35);
+  --modal-overlay: rgba(0, 0, 0, 0.4);
 }
 
 html.dark {
-  --ink: #F0EBE6; 
-  --ink-light: #A39B95;
-  --muted: #A39B95; 
-  --line: #3D3937; 
-  --canvas: #1C1A19;
+  --ink: #F5F5F7; 
+  --ink-light: #86868B;
+  --muted: #86868B; 
+  --line: #38383A; 
+  --canvas: #000000;
   --bg-canvas: var(--canvas);
-  --panel-bg: #262322;
+  --panel-bg: #1C1C1E;
   --bg-panel: var(--panel-bg);
   --panel-border: var(--line);
   --border-color: var(--line);
-  --brand-gradient: linear-gradient(135deg, #A39182, #8C7A6B);
-  --brand-color: #A39182;
-  --brand-color-hover: #B5A69B;
-  --brand-color-light: #332F2D;
-  --sidebar-bg: #171514;
-  --sidebar-text: #A39B95;
-  --sidebar-active: #262322;
-  --hover-bg: #332F2D;
-  --input-bg: #1C1A19;
-  --input-border: #3D3937;
-  --input-text: #F0EBE6;
-  --card-bg: #262322;
-  --banner-bg: linear-gradient(102deg, #262322, #1C1A19);
-  --banner-border: #3D3937;
-  --modal-bg: #262322;
-  --modal-overlay: rgba(0,0,0,0.65);
+  --brand-gradient: linear-gradient(135deg, #47A6FF, #2997FF);
+  --brand-color: #2997FF;
+  --brand-color-hover: #47A6FF;
+  --brand-color-light: #003366;
+  --sidebar-bg: #000000;
+  --sidebar-text: #86868B;
+  --sidebar-active: #1C1C1E;
+  --hover-bg: #2C2C2E;
+  --input-bg: #1C1C1E;
+  --input-border: #38383A;
+  --input-text: #F5F5F7;
+  --card-bg: #1C1C1E;
+  --banner-bg: linear-gradient(102deg, #1C1C1E, #000000);
+  --banner-border: #38383A;
+  --modal-bg: #1C1C1E;
+  --modal-overlay: rgba(0,0,0,0.7);
 }
 * { box-sizing:border-box; }
-body { margin:0; background:var(--canvas); color:var(--ink); font-family:var(--font-sans), Arial, Helvetica, sans-serif; }
+body { 
+  margin:0; 
+  background:var(--canvas); 
+  color:var(--ink); 
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Icons", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
 button,input,select { font:inherit; } button { cursor:pointer; }
 .app-shell { min-height:100vh; display:flex; background:var(--canvas); position:relative; overflow:hidden; }
 .ambient-glow { position:absolute; top:-150px; right:-150px; width:600px; height:600px; background:var(--brand-color); opacity:0.06; border-radius:50%; filter:blur(100px); pointer-events:none; z-index:0; }
