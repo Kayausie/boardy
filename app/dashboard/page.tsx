@@ -284,21 +284,21 @@ export default function Home() {
         </AnimatePresence>
         {!shown.length && <div className="empty-result">No matching team members.</div>}
       </div>
-      <button className="add-person" onClick={() => setModal(true)}><Icon name="plus" size={17}/> Add new staff</button>
+      <button className="add-person apple-btn" style={{borderRadius: 12}} onClick={() => setModal(true)}><Icon name="plus" size={17}/> Add new staff</button>
     </section>
     
     <section className="workspace">
-      <header className="topbar">
+      <header className="topbar apple-glass">
         <div className="crumb"><span>People</span><span>/</span><strong>Probation review</strong></div>
         <div className="top-actions">
-          <div style={{display:'flex', width:'140px', borderRadius:'8px', overflow:'hidden', border:'1px solid var(--brand-color)', fontSize:'11px', fontWeight:'600'}}>
+          <div style={{display:'flex', width:'140px', borderRadius:'14px', overflow:'hidden', border:'1px solid var(--brand-color)', fontSize:'11px', fontWeight:'600'}}>
             <button onClick={() => setViewRole("Manager")} style={{flex:1, padding:'6px 0', border:'0', background: viewRole === 'Manager' ? 'var(--brand-color)' : 'transparent', color: viewRole === 'Manager' ? '#fff' : 'var(--brand-color)', cursor:'pointer', transition:'all 0.2s ease'}}>Manager</button>
             <button onClick={() => setViewRole("HR")} style={{flex:1, padding:'6px 0', border:'0', borderLeft:'1px solid var(--brand-color)', background: viewRole === 'HR' ? 'var(--brand-color)' : 'transparent', color: viewRole === 'HR' ? '#fff' : 'var(--brand-color)', cursor:'pointer', transition:'all 0.2s ease'}}>HR</button>
           </div>
-          <button onClick={handleSimulateWebhook} style={{border:'1px dashed var(--brand-color)',background:'transparent',color:'var(--brand-color)',padding:'8px 12px',borderRadius:'8px',fontSize:'12px',fontWeight:'bold',cursor:'pointer',display:'flex',gap:'6px',alignItems:'center'}}>
+          <button className="apple-btn" onClick={handleSimulateWebhook} style={{border:'1px dashed var(--brand-color)',background:'transparent',color:'var(--brand-color)',padding:'8px 12px',fontSize:'12px',cursor:'pointer',display:'flex',gap:'6px',alignItems:'center'}}>
             <Icon name="zap" size={14}/> Simulate Webhook
           </button>
-          <button onClick={handleGenerateSummary} disabled={isGenerating} style={{border:'0',background:'var(--brand-color)',color:'#fff',padding:'8px 0',borderRadius:'8px',fontSize:'12px',fontWeight:'bold',cursor:'pointer',width:'135px',textAlign:'center'}}>
+          <button className="apple-btn metallic-bg" onClick={handleGenerateSummary} disabled={isGenerating} style={{border:'0',color:'#fff',padding:'8px 0',fontSize:'12px',cursor:'pointer',width:'135px',textAlign:'center'}}>
             {isGenerating ? "Generating..." : `${viewRole} Summary`}
           </button>
           <div style={{position:'relative'}}>
@@ -333,7 +333,7 @@ export default function Home() {
               </span>
               <div>
                 <div className="title-row">
-                  <h2>{selected.name}</h2>
+                  <h2><span className="metallic-text">{selected.name}</span></h2>
                   <span className={`status-pill ${ai.tone}`}>{selected.status}</span>
                 </div>
                 <p>{selected.role} <span>·</span> {selected.department} <span style={{marginLeft:8, color:'#6259cc', fontWeight:700}}>Zapier ID: {selected.id}</span></p>
@@ -366,7 +366,7 @@ export default function Home() {
         
         <AnimatePresence mode="wait">
           <motion.div key={tab} initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -10 }} transition={{ duration: 0.2 }}>
-            {tab === "Overview" && <><section className="section-topline"><div><span className="eyebrow">ONBOARDING HEALTH</span><h3>Milestone progress</h3></div><button className="text-button" onClick={() => setActiveModal("how-it-works")}>How it works <Icon name="arrow" size={15}/></button></section><section className="estimate-grid"><article className={`score-card ${ai.tone}`}><div className="score-card-head"><span>Overall health</span><Icon name="sparkles" size={18}/></div><div className="score-content"><div className="score-ring" style={{"--score":`${progress * 3.6}deg`} as React.CSSProperties}><div><strong>{progress}</strong><span>%</span></div></div><div><h4>{selected.status}</h4><p>{ai.copy}</p></div></div><div className="score-foot"><span>Based on tasks, activity & feedback</span><button onClick={handleAskDetails}>View details <Icon name="arrow" size={14}/></button></div></article><article className="signals-card"><div className="card-title"><div><span className="eyebrow">KEY SIGNALS</span><h3>What’s driving this</h3></div><div style={{position:'relative'}}><button className="more-button" onClick={() => setShowSignalsMenu(!showSignalsMenu)}><Icon name="dots" size={18}/></button>
+            {tab === "Overview" && <><section className="section-topline"><div><span className="eyebrow">ONBOARDING HEALTH</span><h3>Milestone progress</h3></div><button className="text-button" onClick={() => setActiveModal("how-it-works")}>How it works <Icon name="arrow" size={15}/></button></section><section className="estimate-grid"><article className={`score-card ${ai.tone}`}><div className="score-card-head"><span>Overall health</span><Icon name="sparkles" size={18}/></div><div className="score-content"><div className="score-ring" style={{"--score":`${progress * 3.6}deg`} as React.CSSProperties}><div><strong><span className="metallic-text">{progress}</span></strong><span>%</span></div></div><div><h4>{selected.status}</h4><p>{ai.copy}</p></div></div><div className="score-foot"><span>Based on tasks, activity & feedback</span><button onClick={handleAskDetails}>View details <Icon name="arrow" size={14}/></button></div></article><article className="signals-card"><div className="card-title"><div><span className="eyebrow">KEY SIGNALS</span><h3>What’s driving this</h3></div><div style={{position:'relative'}}><button className="more-button" onClick={() => setShowSignalsMenu(!showSignalsMenu)}><Icon name="dots" size={18}/></button>
               <AnimatePresence>
                 {showSignalsMenu && (
                   <motion.div initial={{opacity:0, scale:0.95}} animate={{opacity:1, scale:1}} exit={{opacity:0, scale:0.95}} className="dropdown-menu" style={{position:'absolute', top:'100%', right:0, marginTop:'4px', background:'#fff', border:'1px solid #e2e8f0', borderRadius:'8px', minWidth:'180px', boxShadow:'0 4px 12px rgba(0,0,0,0.1)', zIndex:100, padding:'4px', display:'flex', flexDirection:'column'}}>
@@ -489,10 +489,10 @@ export default function Home() {
               <label>Job title<input placeholder="e.g. Customer Success Manager" value={newStaff.role} onChange={e=>setNewStaff({...newStaff, role:e.target.value})}/></label>
               <label>Start date<input type="date" value={newStaff.date} onChange={e=>setNewStaff({...newStaff, date:e.target.value})}/></label>
             </div>
-            <div className="modal-actions">
-              <button className="cancel-button" onClick={() => setModal(false)}>Cancel</button>
-              <button className="primary-button" onClick={handleAddStaff}>Create profile</button>
-            </div>
+              <div className="modal-actions">
+                <button type="button" className="cancel-button apple-btn" onClick={() => setModal(false)}>Cancel</button>
+                <button type="button" className="primary-button apple-btn metallic-bg" onClick={handleAddStaff}>Add to Probation</button>
+              </div>
           </motion.div>
         </motion.div>
       )}
