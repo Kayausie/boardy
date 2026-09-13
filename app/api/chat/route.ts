@@ -88,12 +88,27 @@ Current Status: ${user.status}`;
     });
 
     const lastMessage = messages[messages.length - 1].content;
-    const result = await chat.sendMessage(lastMessage);
-    const text = result.response.text();
+    const result = await chat.sendMessageStream(lastMessage);
 
-    return NextResponse.json({ success: true, text });
+    const stream = new ReadableStream({
+      async start(controller) {
+        try {
+          for await (const chunk of result.stream) {
+            const chunkText = chunk.text();
+            controller.enqueue(new TextEncoder().encode(chunkText));
+          }
+          controller.close();
+        } catch (e) {
+          controller.error(e);
+        }
+      }
+    });
+
+    return new Response(stream, {
+      headers: { "Content-Type": "text/plain; charset=utf-8" },
+    });
   } catch (error: any) {
     console.error("Chat error:", error);
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    return new Response(error.message, { status: 500 });
   }
 }
