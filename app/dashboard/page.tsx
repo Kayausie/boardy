@@ -326,7 +326,33 @@ export default function Home() {
       
       <div className="content-wrap">
         <motion.div key={selected.id} initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
-          <section className="profile-header"><div className="profile-title"><span className="large-avatar" style={{backgroundColor:selected.color}}>{selected.initials}</span><div><div className="title-row"><h2>{selected.name}</h2><span className={`status-pill ${ai.tone}`}>{selected.status}</span></div><p>{selected.role} <span>·</span> {selected.department} <span style={{marginLeft:8, color:'#6259cc', fontWeight:700}}>Zapier ID: {selected.id}</span></p></div></div><button className="more-button" onClick={() => notify("Review actions are ready to be configured.")}><Icon name="dots" size={20}/></button></section>
+          <section className="profile-header">
+            <div className="profile-title">
+              <span className="large-avatar" style={{backgroundColor:selected.color}}>
+                <img src={`https://api.dicebear.com/7.x/notionists/svg?seed=${selected.name.replace(/\s+/g, '')}&backgroundColor=${selected.color.replace('#','')}`} alt={selected.name} style={{width:'100%', height:'100%', borderRadius:'50%'}}/>
+              </span>
+              <div>
+                <div className="title-row">
+                  <h2>{selected.name}</h2>
+                  <span className={`status-pill ${ai.tone}`}>{selected.status}</span>
+                </div>
+                <p>{selected.role} <span>·</span> {selected.department} <span style={{marginLeft:8, color:'#6259cc', fontWeight:700}}>Zapier ID: {selected.id}</span></p>
+              </div>
+            </div>
+            <div style={{position:'relative'}}>
+              <button className="more-button" onClick={() => setShowProfileMenu(!showProfileMenu)}><Icon name="dots" size={20}/></button>
+              <AnimatePresence>
+                {showProfileMenu && (
+                  <motion.div initial={{opacity:0, scale:0.95}} animate={{opacity:1, scale:1}} exit={{opacity:0, scale:0.95}} className="dropdown-menu" style={{position:'absolute', top:'100%', right:0, marginTop:'4px', background:'#fff', border:'1px solid #e2e8f0', borderRadius:'8px', minWidth:'180px', boxShadow:'0 4px 12px rgba(0,0,0,0.1)', zIndex:100, padding:'4px', display:'flex', flexDirection:'column'}}>
+                    <button style={{padding:'8px 12px', textAlign:'left', fontSize:'13px', background:'transparent', border:'0', cursor:'pointer', borderRadius:'4px'}} onClick={() => {notify("Edit profile action"); setShowProfileMenu(false);}}>Edit Profile</button>
+                    <button style={{padding:'8px 12px', textAlign:'left', fontSize:'13px', background:'transparent', border:'0', cursor:'pointer', borderRadius:'4px'}} onClick={() => {notify("Assign new task"); setShowProfileMenu(false);}}>Assign Task</button>
+                    <div style={{height:'1px', background:'#e2e8f0', margin:'4px 0'}}/>
+                    <button style={{padding:'8px 12px', textAlign:'left', fontSize:'13px', background:'transparent', border:'0', cursor:'pointer', borderRadius:'4px', color:'#ef4444'}} onClick={() => {notify("Suspended user"); setShowProfileMenu(false);}}>Suspend User</button>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          </section>
           <section className="probation-banner"><div className="calendar-icon"><Icon name="calendar" size={18}/></div><div className="probation-copy"><span>PROBATION PERIOD</span><strong>{selected.remaining} days remaining</strong><small>Started {selected.start} · Review due 10 Oct 2024</small></div><div className="progress-summary"><div><span>Progress</span><strong>{progress}%</strong></div><div className="progress-track"><motion.i initial={{width:0}} animate={{width:`${progress}%`}} transition={{duration:0.8}}/></div></div></section>
         </motion.div>
 
