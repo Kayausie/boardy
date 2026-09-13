@@ -64,8 +64,12 @@ Current Status: ${user.status}`;
     const genAI = new GoogleGenerativeAI(apiKey);
     const model = genAI.getGenerativeModel({ model: "gemini-3.6-flash" });
 
-    // Build chat history for Gemini
-    const chatHistory = messages.slice(0, -1).map((m: any) => ({
+    // Build chat history for Gemini (skip the first initial assistant greeting to prevent model-model role collision)
+    const historyMessages = messages.length > 0 && messages[0].content.startsWith("Hi, I'm your AI")
+      ? messages.slice(1, -1)
+      : messages.slice(0, -1);
+      
+    const chatHistory = historyMessages.map((m: any) => ({
       role: m.role === "assistant" ? "model" : "user",
       parts: [{ text: m.content }],
     }));
