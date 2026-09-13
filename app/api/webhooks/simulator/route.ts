@@ -1,4 +1,4 @@
-import db from "@/lib/db";
+import { recordActivityEvent } from "@/lib/activity-events";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(req: NextRequest) {
@@ -13,36 +13,19 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const stmt = db.prepare(
-      `INSERT INTO event_logs (user_id, event_type, description, payload, timestamp) VALUES (?, ?, ?, ?, datetime('now'))`
-    );
-    const result = stmt.run(userId, eventType, description, payload ? JSON.stringify(payload) : "{}");
-
-    // Update user score based on event type
-    const scoreBoost =
-      eventType === "github_commit" ? 5 :
-      eventType === "jira_task" ? 8 :
-      eventType === "ms365_document" ? 3 :
-      eventType === "figma_comment" ? 4 : 2;
-
-    db.prepare(`UPDATE users SET score = MIN(100, score + ?) WHERE id = ?`).run(scoreBoost, userId);
-
-    const user = db.prepare(`SELECT * FROM users WHERE id = ?`).get(userId) as any;
-
-    // Auto-update status based on score
-    let newStatus = "Needs support";
-    if (user.score >= 80) newStatus = "Above & beyond";
-    else if (user.score >= 65) newStatus = "Well done";
-
-    if (user.status !== newStatus) {
-      db.prepare(`UPDATE users SET status = ? WHERE id = ?`).run(newStatus, userId);
-    }
+    const result = recordActivityEvent({
+      userId: Number(userId),
+      source: "simulator",
+      eventType,
+      description,
+      payload,
+    });
 
     return NextResponse.json({
       success: true,
-      event: { id: result.lastInsertRowid, userId, eventType, description },
-      scoreBoost,
-      newScore: user.score,
+      event: { id: result.eventId, userId, eventType, description },
+      scoreBoost: result.scoreBoost,
+      newScore: result.newScore,
     });
   } catch (error: any) {
     console.error("Webhook simulator error:", error);

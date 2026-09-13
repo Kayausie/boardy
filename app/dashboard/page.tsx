@@ -60,7 +60,7 @@ export default function Home() {
 
   // Fetch users from DB on mount
   useEffect(() => {
-    fetch("/api/users").then(r => r.json()).then(data => {
+    const loadUsers = () => fetch("/api/users").then(r => r.json()).then(data => {
       if (data.success && data.users.length > 0) {
         setPeople(data.users.map((u: any) => ({
           id: u.id, name: u.name, initials: u.initials, role: u.role,
@@ -70,6 +70,9 @@ export default function Home() {
         })));
       }
     }).catch(() => {});
+    loadUsers();
+    const interval = window.setInterval(loadUsers, 15000);
+    return () => window.clearInterval(interval);
   }, []);
 
   const [selectedId, setSelectedId] = useState(1); 
@@ -95,10 +98,14 @@ export default function Home() {
   
   // Fetch events when selected user changes
   useEffect(() => {
-    if (selected?.id) {
-      fetch(`/api/users/${selected.id}/events`).then(r => r.json()).then(data => {
+    const userId = selected?.id;
+    if (userId) {
+      const loadEvents = () => fetch(`/api/users/${userId}/events`).then(r => r.json()).then(data => {
         if (data.success) setDbEvents(data.events);
       }).catch(() => {});
+      loadEvents();
+      const interval = window.setInterval(loadEvents, 15000);
+      return () => window.clearInterval(interval);
     }
   }, [selected?.id]);
 
@@ -265,7 +272,7 @@ export default function Home() {
       
       <div className="content-wrap">
         <motion.div key={selected.id} initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
-          <section className="profile-header"><div className="profile-title"><span className="large-avatar" style={{backgroundColor:selected.color}}>{selected.initials}</span><div><div className="title-row"><h2>{selected.name}</h2><span className={`status-pill ${ai.tone}`}>{selected.status}</span></div><p>{selected.role} <span>·</span> {selected.department}</p></div></div><button className="more-button" onClick={() => notify("Review actions are ready to be configured.")}><Icon name="dots" size={20}/></button></section>
+          <section className="profile-header"><div className="profile-title"><span className="large-avatar" style={{backgroundColor:selected.color}}>{selected.initials}</span><div><div className="title-row"><h2>{selected.name}</h2><span className={`status-pill ${ai.tone}`}>{selected.status}</span></div><p>{selected.role} <span>·</span> {selected.department} <span style={{marginLeft:8, color:'#6259cc', fontWeight:700}}>Zapier ID: {selected.id}</span></p></div></div><button className="more-button" onClick={() => notify("Review actions are ready to be configured.")}><Icon name="dots" size={20}/></button></section>
           <section className="probation-banner"><div className="calendar-icon"><Icon name="calendar" size={18}/></div><div className="probation-copy"><span>PROBATION PERIOD</span><strong>{selected.remaining} days remaining</strong><small>Started {selected.start} · Review due 10 Oct 2024</small></div><div className="progress-summary"><div><span>Progress</span><strong>{progress}%</strong></div><div className="progress-track"><motion.i initial={{width:0}} animate={{width:`${progress}%`}} transition={{duration:0.8}}/></div></div></section>
         </motion.div>
 
@@ -279,15 +286,11 @@ export default function Home() {
         
         <AnimatePresence mode="wait">
           <motion.div key={tab} initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -10 }} transition={{ duration: 0.2 }}>
-            {tab === "Overview" && <><section className="section-topline"><div><span className="eyebrow">AI PERFORMANCE ESTIMATE</span><h3>Performance snapshot</h3></div><button className="text-button" onClick={() => notify("The estimate refreshes as new activity arrives.")}>How it works <Icon name="arrow" size={15}/></button></section><section className="estimate-grid"><article className={`score-card ${ai.tone}`}><div className="score-card-head"><span>Current estimate</span><Icon name="sparkles" size={18}/></div><div className="score-content"><div className="score-ring" style={{"--score":`${selected.score * 3.6}deg`} as React.CSSProperties}><div><strong>{selected.score}</strong><span>/100</span></div></div><div><h4>{selected.status}</h4><p>{ai.copy}</p></div></div><div className="score-foot"><span>Based on tasks, activity & feedback</span><button onClick={() => notify("Assessment details opened.")}>View details <Icon name="arrow" size={14}/></button></div></article><article className="signals-card"><div className="card-title"><div><span className="eyebrow">KEY SIGNALS</span><h3>What’s driving this</h3></div><button className="more-button"><Icon name="dots" size={18}/></button></div><div className="signals"><Signal icon="check" color="purple" title={`${selected.tasks.filter(t => t.progress === 100).length + 4} tasks completed`} body="on or ahead of schedule" impact="+12"/><Signal icon="message" color="blue" title="Responsive collaboration" body="Avg. reply time: 1h 14m" impact="+8"/><Signal icon="clipboard" color="orange" title="Growth opportunity" body="Documentation consistency" impact="—"/></div></article></section><section className="section-topline task-heading"><div><span className="eyebrow">CURRENT WORK</span><h3>Assigned tasks</h3></div><button className="text-button" onClick={() => setTab("Tasks")}>View all tasks <Icon name="arrow" size={15}/></button></section><section className="tasks-card">{selected.tasks.map(t => <TaskRow task={t} key={t.title}/>)}</section><section className="section-topline activity-heading"><div><span className="eyebrow">RECENT ACTIVITY</span><h3>Latest updates</h3></div><button className="text-button" onClick={() => setTab("Activity")}>View activity <Icon name="arrow" size={15}/></button></section><section className="activity-card">{selected.activities.slice(0,3).map((a,i) => <ActivityRow activity={a} key={i}/>)}</section></>}
+            {tab === "Overview" && <><section className="section-topline"><div><span className="eyebrow">AI PERFORMANCE ESTIMATE</span><h3>Performance snapshot</h3></div><button className="text-button" onClick={() => notify("The estimate refreshes as new activity arrives.")}>How it works <Icon name="arrow" size={15}/></button></section><section className="estimate-grid"><article className={`score-card ${ai.tone}`}><div className="score-card-head"><span>Current estimate</span><Icon name="sparkles" size={18}/></div><div className="score-content"><div className="score-ring" style={{"--score":`${selected.score * 3.6}deg`} as React.CSSProperties}><div><strong>{selected.score}</strong><span>/100</span></div></div><div><h4>{selected.status}</h4><p>{ai.copy}</p></div></div><div className="score-foot"><span>Based on tasks, activity & feedback</span><button onClick={() => notify("Assessment details opened.")}>View details <Icon name="arrow" size={14}/></button></div></article><article className="signals-card"><div className="card-title"><div><span className="eyebrow">KEY SIGNALS</span><h3>What’s driving this</h3></div><button className="more-button"><Icon name="dots" size={18}/></button></div><div className="signals"><Signal icon="check" color="purple" title={`${selected.tasks.filter(t => t.progress === 100).length + 4} tasks completed`} body="on or ahead of schedule" impact="+12"/><Signal icon="message" color="blue" title="Responsive collaboration" body="Avg. reply time: 1h 14m" impact="+8"/><Signal icon="clipboard" color="orange" title="Growth opportunity" body="Documentation consistency" impact="—"/></div></article></section><section className="section-topline task-heading"><div><span className="eyebrow">CURRENT WORK</span><h3>Assigned tasks</h3></div><button className="text-button" onClick={() => setTab("Tasks")}>View all tasks <Icon name="arrow" size={15}/></button></section><section className="tasks-card">{selected.tasks.map(t => <TaskRow task={t} key={t.title}/>)}</section><section className="section-topline activity-heading"><div><span className="eyebrow">RECENT ACTIVITY</span><h3>Latest updates</h3></div><button className="text-button" onClick={() => setTab("Activity")}>View activity <Icon name="arrow" size={15}/></button></section><section className="activity-card">{dbEvents.length ? dbEvents.slice(0,3).map((ev: any) => <DbActivityRow event={ev} key={ev.id}/>) : selected.activities.slice(0,3).map((a,i) => <ActivityRow activity={a} key={i}/>)}</section></>}
             
             {tab === "Tasks" && <section className="tasks-card full-card">{selected.tasks.length === 0 ? <div style={{padding:'20px',color:'#777'}}>No tasks yet.</div> : selected.tasks.map(t => <TaskRow task={t} key={t.title}/>)}</section>}
             
-            {tab === "Activity" && <section className="activity-card full-card">{dbEvents.length === 0 ? <div style={{padding:'20px',color:'#777'}}>No events recorded yet.</div> : dbEvents.map((ev: any, i: number) => {
-              const iconMap: Record<string,string> = {github_commit:"upload",github_issue:"message",jira_task:"check",ms365_document:"upload",ms365_email:"mail",figma_comment:"message",slack_message:"message"};
-              const typeMap: Record<string,string> = {github_commit:"upload",github_issue:"comment",jira_task:"task",ms365_document:"upload",ms365_email:"mail",figma_comment:"comment",slack_message:"comment"};
-              return <div className="activity-row" key={i}><span className={`activity-icon ${typeMap[ev.event_type] || 'task'}`}><Icon name={iconMap[ev.event_type] || "check"} size={16}/></span><div><strong>{ev.description}</strong><small>{ev.event_type.replace(/_/g, " ").toUpperCase()}</small></div><time>{new Date(ev.timestamp).toLocaleString()}</time></div>;
-            })}</section>}
+            {tab === "Activity" && <section className="activity-card full-card">{dbEvents.length === 0 ? <div style={{padding:'20px',color:'#777'}}>No events recorded yet.</div> : dbEvents.map((ev: any) => <DbActivityRow event={ev} key={ev.id}/>)}</section>}
             
             {tab === "AI Buddy" && (
               <section className="tasks-card full-card" style={{padding:'20px', display:'flex', flexDirection:'column', gap:'16px', minHeight:'400px'}}>
@@ -362,3 +365,4 @@ export default function Home() {
 function Signal({icon,color,title,body,impact}:{icon:string;color:string;title:string;body:string;impact:string}) { return <div><span className={`signal-icon ${color}`}><Icon name={icon} size={16}/></span><p><strong>{title}</strong><small>{body}</small></p><b className={impact === "—" ? "neutral" : "positive"}>{impact}</b></div>; }
 function TaskRow({task}:{task:Task}) { return <div className="task-row"><div className="task-main"><span className={`task-check ${task.progress===100?"done":""}`}>{task.progress===100&&<Icon name="check" size={13}/>}</span><div><strong>{task.title}</strong><small>{task.detail}</small></div></div><div className="task-progress"><div className="mini-bar"><i style={{width:`${task.progress}%`}}/></div><span>{task.progress}%</span></div><div className={`task-status ${task.progress===100?"complete":""}`}>{task.status}</div><small className="due">{task.due}</small><button className="more-button"><Icon name="dots" size={17}/></button></div>; }
 function ActivityRow({activity}:{activity:Activity}) { const icons={mail:"mail",upload:"upload",task:"check",comment:"message"}; return <div className="activity-row"><span className={`activity-icon ${activity.type}`}><Icon name={icons[activity.type]} size={16}/></span><div><strong>{activity.text}</strong><small>{activity.meta}</small></div><time>{activity.time}</time></div>; }
+function DbActivityRow({event}:{event:any}) { const iconMap: Record<string,string> = {github_commit:"upload",github_issue:"message",jira_task:"check",ms365_document:"upload",ms365_email:"mail",figma_comment:"message",slack_message:"message",file_uploaded:"upload",file_updated:"upload",task_completed:"check"}; const typeMap: Record<string,string> = {github_commit:"upload",github_issue:"comment",jira_task:"task",ms365_document:"upload",ms365_email:"mail",figma_comment:"comment",slack_message:"comment",file_uploaded:"upload",file_updated:"upload",task_completed:"task"}; return <div className="activity-row"><span className={`activity-icon ${typeMap[event.event_type] || 'task'}`}><Icon name={iconMap[event.event_type] || "check"} size={16}/></span><div><strong>{event.description}</strong><small>{`${event.source || "manual"} · ${event.event_type.replace(/_/g, " ")}`.toUpperCase()}</small></div><time>{new Date(event.timestamp).toLocaleString()}</time></div>; }

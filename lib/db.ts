@@ -43,6 +43,25 @@ db.exec(`
   );
 `);
 
+// Lightweight migrations keep existing hackathon data intact between restarts.
+function addEventLogColumn(definition: string) {
+  try {
+    db.exec(`ALTER TABLE event_logs ADD COLUMN ${definition}`);
+  } catch (error) {
+    // Multiple Next.js workers can initialize this module concurrently during a build.
+    // SQLite reports a duplicate-column error for the worker that loses that race.
+    if (!(error instanceof Error) || !error.message.includes("duplicate column name")) throw error;
+  }
+}
+
+addEventLogColumn("source TEXT DEFAULT 'manual'");
+addEventLogColumn("external_id TEXT");
+db.exec(`
+  CREATE UNIQUE INDEX IF NOT EXISTS idx_event_logs_source_external_id
+  ON event_logs(source, external_id)
+  WHERE external_id IS NOT NULL;
+`);
+
 export default db;
 
 // ─── Helper Types ───
@@ -67,6 +86,8 @@ export type EventLog = {
   description: string;
   payload: string;
   timestamp: string;
+  source: string;
+  external_id: string | null;
 };
 
 export type Summary = {
