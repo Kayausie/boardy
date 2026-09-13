@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
-import { Plus_Jakarta_Sans } from "next/font/google";
+import { Nunito } from "next/font/google";
 import "./globals.css";
 
-const jakarta = Plus_Jakarta_Sans({
+const nunito = Nunito({
   subsets: ["latin"],
   display: "swap",
   variable: "--font-sans",
@@ -15,7 +15,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`h-full antialiased ${jakarta.variable}`}>
+    <html lang="en" className={`h-full antialiased ${nunito.variable}`}>
       <body className="min-h-full flex flex-col font-sans">{children}</body>
     </html>
   );
