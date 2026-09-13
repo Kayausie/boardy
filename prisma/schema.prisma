@@ -1,43 +1,58 @@
+// schema.prisma (Reference Schema for Judges / Enterprise Scaling)
+// Note: MVP currently runs on raw SQLite via better-sqlite3 for zero-config hackathon execution.
+// This schema represents the production target state on PostgreSQL.
+
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "sqlite"
-  url      = "file:./dev.db"
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 model User {
-  id         Int        @id @default(autoincrement())
-  name       String
-  initials   String
-  role       String
-  department String
-  startDate  String
-  remaining  Int        @default(60)
-  score      Int        @default(0)
-  status     String     @default("Needs support")
-  color      String     @default("#e2e8f0")
-  createdAt  DateTime   @default(now())
-  events     EventLog[]
-  summaries  Summary[]
+  id          String     @id @default(cuid())
+  email       String     @unique
+  name        String
+  initials    String
+  role        String
+  department  String
+  startDate   DateTime   @map("start_date")
+  remaining   Int        @default(90)
+  score       Int        @default(50)
+  status      String     @default("Needs support")
+  color       String     @default("#cbd5e1")
+  createdAt   DateTime   @default(now()) @map("created_at")
+
+  events      EventLog[]
+  summaries   Summary[]
+
+  @@map("users")
 }
 
 model EventLog {
-  id          Int      @id @default(autoincrement())
-  userId      Int
-  eventType   String   // "github_commit", "jira_task", "ms365_document", etc.
+  id          String   @id @default(cuid())
+  userId      String   @map("user_id")
+  source      String   // 'github', 'ms365', etc.
+  eventType   String   @map("event_type")
   description String
-  payload     String   @default("{}") // JSON string for flexible metadata
+  payload     Json     // Raw stringified JSON for flexible integrations
   timestamp   DateTime @default(now())
-  user        User     @relation(fields: [userId], references: [id])
+  
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("event_logs")
 }
 
 model Summary {
-  id        Int      @id @default(autoincrement())
-  userId    Int
-  role      String   // "HR" or "Manager"
-  content   String
-  createdAt DateTime @default(now())
-  user      User     @relation(fields: [userId], references: [id])
+  id          String   @id @default(cuid())
+  userId      String   @map("user_id")
+  role        String
+  content     String
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("summaries")
 }
