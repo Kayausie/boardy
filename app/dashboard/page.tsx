@@ -1,8 +1,9 @@
 "use client";
 
 import { useMemo, useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, useAnimation } from "framer-motion";
 import ReactMarkdown from "react-markdown";
+import Link from "next/link";
 import GridView from '../components/GridView';
 import TasksView from '../components/TasksView';
 import ChartView from '../components/ChartView';
@@ -68,10 +69,26 @@ const iconPaths: Record<string, React.ReactNode> = {
 };
 function Icon({ name, size = 18, className, style }: { name: string; size?: number; className?: string; style?: React.CSSProperties }) { return <svg width={size} height={size} className={className} style={style} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{iconPaths[name]}</svg>; }
 
-const estimation = {
-  "Above & beyond": { copy: "Consistently moving work forward independently and contributing beyond core responsibilities.", tone: "excellent" },
-  "Well done": { copy: "Meeting role expectations with steady delivery and a healthy ramp-up trajectory.", tone: "good" },
-  "Needs support": { copy: "Would benefit from a focused check-in and a clear plan to build confidence in the role.", tone: "support" },
+const getEstimation = (status: string, role: string) => {
+  const estimations: Record<string, any> = {
+    "Above & beyond": {
+      Manager: "Consistently moving technical work forward, closing tasks quickly, and exceeding velocity expectations.",
+      HR: "Demonstrating exceptional cultural fit, highly proactive in team communication, and mentoring peers.",
+      tone: "excellent"
+    },
+    "Well done": {
+      Manager: "Meeting role expectations with steady code delivery and a healthy ramp-up trajectory on core systems.",
+      HR: "Settling into the team well, communicating effectively, and completing all mandatory onboarding milestones.",
+      tone: "good"
+    },
+    "Needs support": {
+      Manager: "Velocity is lower than expected. Recommend reviewing recent blockers in Jira and doing a pair-programming session.",
+      HR: "Would benefit from a focused check-in regarding their well-being and a clear plan to build confidence in their new environment.",
+      tone: "support"
+    },
+  };
+  const est = estimations[status] || estimations["Needs support"];
+  return { copy: est[role], tone: est.tone };
 };
 
 export default function Home() {
@@ -97,7 +114,7 @@ export default function Home() {
 
   const [selectedId, setSelectedId] = useState(1); 
   const [query, setQuery] = useState(""); 
-  const [tab, setTab] = useState<"Overview" | "Tasks" | "Activity" | "AI Buddy">("Overview"); 
+  const [tab, setTab] = useState<"Overview" | "Tasks" | "Activity">("Overview"); 
   const [modal, setModal] = useState(false);
   const [currentView, setCurrentView] = useState<"grid" | "people" | "tasks" | "chart">("people");
   const [activeModal, setActiveModal] = useState<"settings" | "how-it-works" | null>(null);
@@ -112,6 +129,8 @@ export default function Home() {
   
   const [chatMessages, setChatMessages] = useState([{ role: "assistant", content: "Hi, I'm your AI Assessment Assistant. I can analyze employee progress, activities, and identify blockers. What would you like to know?" }]);
   const [messageInput, setMessageInput] = useState("");
+  const [showChat, setShowChat] = useState(false);
+  const aiButtonControls = useAnimation();
   
   const [newStaff, setNewStaff] = useState({ name: "", dept: "", role: "", date: "" });
 
@@ -135,6 +154,7 @@ export default function Home() {
     }
   }, [selected?.id]);
 
+<<<<<<< HEAD
   const ai = estimation[selected?.status] || estimation["Needs support"]; 
   const taskProgress = selected?.tasks?.length
     ? Math.round(selected.tasks.reduce((sum, task) => sum + task.progress, 0) / selected.tasks.length)
@@ -144,6 +164,10 @@ export default function Home() {
   const performanceCopy = selected?.tasks?.length
     ? `${completedTasks} of ${selected.tasks.length} assigned tasks complete; average task progress is ${taskProgress}%. ${ai.copy}`
     : ai.copy;
+=======
+  const ai = getEstimation(selected?.status, viewRole);
+  const progress = Math.round((90 - (selected?.remaining || 60)) / 90 * 100);
+>>>>>>> 2a1305ce552e80672d256c80082544730af68b73
   const notify = (text: string) => { setToast(text); window.setTimeout(() => setToast(""), 2800); };
 
   const handleGenerateSummary = async () => {
@@ -158,7 +182,7 @@ export default function Home() {
       const data = await res.json();
       if (data.success) {
         setChatMessages(prev => [...prev, { role: "assistant", content: `**${viewRole} Summary for ${selected.name}:**\n\n${data.summary}` }]);
-        setTab("AI Buddy");
+        setShowChat(true);
         notify(`${viewRole} summary generated!`);
       } else {
         notify("Error: " + data.error);
@@ -182,13 +206,30 @@ export default function Home() {
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: newMessages, userId: selected.id })
+        body: JSON.stringify({ messages: newMessages, userId: selected.id, viewRole })
       });
-      const data = await res.json();
-      if (data.success) {
-        setChatMessages([...newMessages, { role: "assistant", content: data.text }]);
-      } else {
-        notify("Gemini Error: " + data.error);
+      if (!res.ok) {
+        const err = await res.text();
+        notify("Gemini Error: " + err);
+        return;
+      }
+      if (!res.body) throw new Error("No response body");
+
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let aiText = "";
+      
+      setChatMessages(prev => [...prev, { role: "assistant", content: "" }]);
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        aiText += decoder.decode(value, { stream: true });
+        setChatMessages(prev => {
+          const updated = [...prev];
+          updated[updated.length - 1] = { ...updated[updated.length - 1], content: aiText };
+          return updated;
+        });
       }
     } catch (e) {
       console.error(e);
@@ -199,7 +240,7 @@ export default function Home() {
   };
 
   const handleAskDetails = async () => {
-    setTab("AI Buddy");
+    setShowChat(true);
     const queryMsg = "Please explain the details behind the current AI Performance Estimate (Score and Status). What factors contributed to this?";
     const newMessages = [...chatMessages, { role: "user", content: queryMsg }];
     setChatMessages(newMessages);
@@ -208,13 +249,30 @@ export default function Home() {
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: newMessages, userId: selected.id })
+        body: JSON.stringify({ messages: newMessages, userId: selected.id, viewRole })
       });
-      const data = await res.json();
-      if (data.success) {
-        setChatMessages([...newMessages, { role: "assistant", content: data.text }]);
-      } else {
-        notify("Gemini Error: " + data.error);
+      if (!res.ok) {
+        const err = await res.text();
+        notify("Gemini Error: " + err);
+        return;
+      }
+      if (!res.body) throw new Error("No response body");
+
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let aiText = "";
+      
+      setChatMessages(prev => [...prev, { role: "assistant", content: "" }]);
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        aiText += decoder.decode(value, { stream: true });
+        setChatMessages(prev => {
+          const updated = [...prev];
+          updated[updated.length - 1] = { ...updated[updated.length - 1], content: aiText };
+          return updated;
+        });
       }
     } catch (e) {
       notify("Failed to connect to AI Buddy.");
@@ -284,7 +342,7 @@ export default function Home() {
   };
 
   return <main className="app-shell">
-    <aside className="side-rail"><div className="brand-mark">P</div><nav className="rail-nav" aria-label="Primary navigation"><button className={`rail-item ${currentView === 'grid' ? 'active' : ''}`} onClick={() => setCurrentView('grid')}><Icon name="grid" /></button><button className={`rail-item ${currentView === 'people' ? 'active' : ''}`} onClick={() => setCurrentView('people')}><Icon name="people" /></button><button className={`rail-item ${currentView === 'tasks' ? 'active' : ''}`} onClick={() => setCurrentView('tasks')}><Icon name="check" /></button><button className={`rail-item ${currentView === 'chart' ? 'active' : ''}`} onClick={() => setCurrentView('chart')}><Icon name="chart" /></button></nav><button className="rail-item rail-bottom" onClick={() => setIsDarkMode(!isDarkMode)}><Icon name={isDarkMode ? "sun" : "moon"} /></button><button className="rail-item" style={{marginBottom:'10px'}} onClick={() => setActiveModal("settings")}><Icon name="settings" /></button></aside>
+    <aside className="side-rail"><Link href="/" style={{ display: "flex", alignItems: "baseline", textDecoration: "none", color: "inherit" }}><span style={{ fontWeight: 800, fontSize: 18, letterSpacing: -1 }}>Boardy</span><span className="metallic-text" style={{ fontWeight: 900, fontSize: 26, lineHeight: 0.5 }}>.</span></Link><nav className="rail-nav" aria-label="Primary navigation"><button className={`rail-item ${currentView === 'grid' ? 'active' : ''}`} onClick={() => setCurrentView('grid')}><Icon name="grid" /></button><button className={`rail-item ${currentView === 'people' ? 'active' : ''}`} onClick={() => setCurrentView('people')}><Icon name="people" /></button><button className={`rail-item ${currentView === 'tasks' ? 'active' : ''}`} onClick={() => setCurrentView('tasks')}><Icon name="check" /></button><button className={`rail-item ${currentView === 'chart' ? 'active' : ''}`} onClick={() => setCurrentView('chart')}><Icon name="chart" /></button></nav><button className="rail-item rail-bottom" onClick={() => setIsDarkMode(!isDarkMode)}><Icon name={isDarkMode ? "sun" : "moon"} /></button><button className="rail-item" style={{marginBottom:'10px'}} onClick={() => setActiveModal("settings")}><Icon name="settings" /></button></aside>
     {currentView === 'people' && (
       <>
       <section className="staff-panel">
@@ -303,21 +361,21 @@ export default function Home() {
         </AnimatePresence>
         {!shown.length && <div className="empty-result">No matching team members.</div>}
       </div>
-      <button className="add-person" onClick={() => setModal(true)}><Icon name="plus" size={17}/> Add new staff</button>
+      <button className="add-person apple-btn" style={{borderRadius: 12}} onClick={() => setModal(true)}><Icon name="plus" size={17}/> Add new staff</button>
     </section>
     
     <section className="workspace">
-      <header className="topbar">
+      <header className="topbar apple-glass">
         <div className="crumb"><span>People</span><span>/</span><strong>Probation review</strong></div>
         <div className="top-actions">
-          <div style={{display:'flex', width:'140px', borderRadius:'8px', overflow:'hidden', border:'1px solid var(--brand-color)', fontSize:'11px', fontWeight:'600'}}>
+          <div style={{display:'flex', width:'140px', borderRadius:'14px', overflow:'hidden', border:'1px solid var(--brand-color)', fontSize:'11px', fontWeight:'600'}}>
             <button onClick={() => setViewRole("Manager")} style={{flex:1, padding:'6px 0', border:'0', background: viewRole === 'Manager' ? 'var(--brand-color)' : 'transparent', color: viewRole === 'Manager' ? '#fff' : 'var(--brand-color)', cursor:'pointer', transition:'all 0.2s ease'}}>Manager</button>
             <button onClick={() => setViewRole("HR")} style={{flex:1, padding:'6px 0', border:'0', borderLeft:'1px solid var(--brand-color)', background: viewRole === 'HR' ? 'var(--brand-color)' : 'transparent', color: viewRole === 'HR' ? '#fff' : 'var(--brand-color)', cursor:'pointer', transition:'all 0.2s ease'}}>HR</button>
           </div>
-          <button onClick={handleSimulateWebhook} style={{border:'1px dashed var(--brand-color)',background:'transparent',color:'var(--brand-color)',padding:'8px 12px',borderRadius:'8px',fontSize:'12px',fontWeight:'bold',cursor:'pointer',display:'flex',gap:'6px',alignItems:'center'}}>
+          <button className="apple-btn" onClick={handleSimulateWebhook} style={{border:'1px dashed var(--brand-color)',background:'transparent',color:'var(--brand-color)',padding:'8px 12px',fontSize:'12px',cursor:'pointer',display:'flex',gap:'6px',alignItems:'center'}}>
             <Icon name="zap" size={14}/> Simulate Webhook
           </button>
-          <button onClick={handleGenerateSummary} disabled={isGenerating} style={{border:'0',background:'var(--brand-color)',color:'#fff',padding:'8px 0',borderRadius:'8px',fontSize:'12px',fontWeight:'bold',cursor:'pointer',width:'135px',textAlign:'center'}}>
+          <button className="apple-btn metallic-bg" onClick={handleGenerateSummary} disabled={isGenerating} style={{border:'0',color:'#fff',padding:'8px 0',fontSize:'12px',cursor:'pointer',width:'135px',textAlign:'center'}}>
             {isGenerating ? "Generating..." : `${viewRole} Summary`}
           </button>
           <div style={{position:'relative'}}>
@@ -352,7 +410,7 @@ export default function Home() {
               </span>
               <div>
                 <div className="title-row">
-                  <h2>{selected.name}</h2>
+                  <h2><span className="metallic-text">{selected.name}</span></h2>
                   <span className={`status-pill ${ai.tone}`}>{selected.status}</span>
                 </div>
                 <p>{selected.role} <span>·</span> {selected.department} <span style={{marginLeft:8, color:'#6259cc', fontWeight:700}}>Zapier ID: {selected.id}</span></p>
@@ -376,7 +434,7 @@ export default function Home() {
         </motion.div>
 
         <div className="tabs" role="tablist">
-          {(["Overview","Tasks","Activity","AI Buddy"] as const).map(name => (
+          {(["Overview","Tasks","Activity"] as const).map(name => (
             <button key={name} className={tab===name?"active":""} onClick={() => setTab(name as any)}>
               {name}{name === "Tasks" && <span>{selected.tasks.length}</span>}{name === "Activity" && <span>{dbEvents.length}</span>}
             </button>
@@ -385,7 +443,11 @@ export default function Home() {
         
         <AnimatePresence mode="wait">
           <motion.div key={tab} initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -10 }} transition={{ duration: 0.2 }}>
+<<<<<<< HEAD
             {tab === "Overview" && <><section className="section-topline"><div><span className="eyebrow">ONBOARDING HEALTH</span><h3>Milestone progress</h3></div><button className="text-button" onClick={() => setActiveModal("how-it-works")}>How it works <Icon name="arrow" size={15}/></button></section><section className="estimate-grid"><article className={`score-card ${ai.tone}`}><div className="score-card-head"><span>Overall health</span><Icon name="sparkles" size={18}/></div><div className="score-content"><div className="score-ring" style={{"--score":`${progress * 3.6}deg`} as React.CSSProperties}><div><strong>{progress}</strong><span>%</span></div></div><div><h4>{selected.status}</h4><p>{performanceCopy}</p></div></div><div className="score-foot"><span>Based on tasks, activity & feedback</span><button onClick={handleAskDetails}>View details <Icon name="arrow" size={14}/></button></div></article><article className="signals-card"><div className="card-title"><div><span className="eyebrow">KEY SIGNALS</span><h3>What’s driving this</h3></div><div style={{position:'relative'}}><button className="more-button" onClick={() => setShowSignalsMenu(!showSignalsMenu)}><Icon name="dots" size={18}/></button>
+=======
+            {tab === "Overview" && <><section className="section-topline"><div><span className="eyebrow">{viewRole === "Manager" ? "ONBOARDING HEALTH" : "CULTURE & FIT"}</span><h3>{viewRole === "Manager" ? "Milestone progress" : "Onboarding sentiment"}</h3></div><button className="text-button" onClick={() => setActiveModal("how-it-works")}>How it works <Icon name="arrow" size={15}/></button></section><section className="estimate-grid"><article className={`score-card ${ai.tone}`}><div className="score-card-head"><span>{viewRole === "Manager" ? "Overall health" : "Culture fit"}</span><Icon name="sparkles" size={18}/></div><div className="score-content"><div className="score-ring" style={{"--score":`${progress * 3.6}deg`} as React.CSSProperties}><div><strong><span className="metallic-text">{progress}</span></strong><span>%</span></div></div><div><h4>{selected.status}</h4><p>{ai.copy}</p></div></div><div className="score-foot"><span>Based on tasks, activity & feedback</span><button onClick={handleAskDetails}>View details <Icon name="arrow" size={14}/></button></div></article><article className="signals-card"><div className="card-title"><div><span className="eyebrow">KEY SIGNALS</span><h3>What’s driving this</h3></div><div style={{position:'relative'}}><button className="more-button" onClick={() => setShowSignalsMenu(!showSignalsMenu)}><Icon name="dots" size={18}/></button>
+>>>>>>> 2a1305ce552e80672d256c80082544730af68b73
               <AnimatePresence>
                 {showSignalsMenu && (
                   <motion.div initial={{opacity:0, scale:0.95}} animate={{opacity:1, scale:1}} exit={{opacity:0, scale:0.95}} className="dropdown-menu" style={{position:'absolute', top:'100%', right:0, marginTop:'4px', background:'#fff', border:'1px solid #e2e8f0', borderRadius:'8px', minWidth:'180px', boxShadow:'0 4px 12px rgba(0,0,0,0.1)', zIndex:100, padding:'4px', display:'flex', flexDirection:'column'}}>
@@ -394,44 +456,22 @@ export default function Home() {
                   </motion.div>
                 )}
               </AnimatePresence>
+<<<<<<< HEAD
             </div></div><div className="signals"><Signal icon="check" color="purple" title={`${completedTasks} of ${selected.tasks.length || 0} tasks complete`} body={taskProgress === null ? "Waiting for task data" : `Average progress ${taskProgress}%`} impact={taskProgress === null ? "—" : "+12"}/><Signal icon="message" color="blue" title={dbEvents.length ? `${dbEvents.length} activity signals` : "Responsive collaboration"} body={dbEvents.length ? "Captured from connected tools" : "Awaiting connected-tool activity"} impact={dbEvents.length ? "+8" : "—"}/><Signal icon="clipboard" color="orange" title={taskProgress !== null && taskProgress < 65 ? "Growth opportunity" : "On track"} body={taskProgress !== null && taskProgress < 65 ? "Focus on the lowest-progress task" : "Task delivery is tracking well"} impact="—"/></div></article></section><section className="section-topline task-heading"><div><span className="eyebrow">CURRENT WORK</span><h3>Assigned tasks</h3></div><button className="text-button" onClick={() => setTab("Tasks")}>View all tasks <Icon name="arrow" size={15}/></button></section><section className="tasks-card">{selected.tasks.map(t => <TaskRow task={t} key={t.title}/>)}</section><section className="section-topline activity-heading"><div><span className="eyebrow">RECENT ACTIVITY</span><h3>Latest updates</h3></div><button className="text-button" onClick={() => setTab("Activity")}>View activity <Icon name="arrow" size={15}/></button></section><section className="activity-card">{selected.activities.slice(0,3).map((a,i) => <ActivityRow activity={a} key={i}/>)}</section></>}
+=======
+            </div></div>
+            {viewRole === "Manager" ? (
+              <div className="signals"><Signal icon="check" color="purple" title={`${selected.tasks.filter(t => t.progress === 100).length + 4} technical tasks closed`} body="High velocity on assigned sprint" impact="+12"/><Signal icon="upload" color="blue" title="Consistent code quality" body="Low PR rejection rate" impact="+8"/><Signal icon="clipboard" color="orange" title="Growth opportunity" body="System architecture understanding" impact="—"/></div>
+            ) : (
+              <div className="signals"><Signal icon="check" color="purple" title="Onboarding milestones met" body="Completed all induction sessions" impact="+12"/><Signal icon="message" color="blue" title="Responsive collaboration" body="Highly active in team channels" impact="+8"/><Signal icon="clipboard" color="orange" title="Growth opportunity" body="Cross-departmental networking" impact="—"/></div>
+            )}
+            </article></section><section className="section-topline task-heading"><div><span className="eyebrow">{viewRole === "Manager" ? "CURRENT WORK" : "CORE ROADMAP"}</span><h3>{viewRole === "Manager" ? "Assigned tasks" : "Onboarding Milestones"}</h3></div><button className="text-button" onClick={() => setTab("Tasks")}>View all tasks <Icon name="arrow" size={15}/></button></section><section className="tasks-card">{selected.tasks.map(t => <TaskRow task={t} key={t.title}/>)}</section><section className="section-topline activity-heading"><div><span className="eyebrow">{viewRole === "Manager" ? "RECENT ACTIVITY" : "TEAM ENGAGEMENT"}</span><h3>{viewRole === "Manager" ? "Latest updates" : "Social & Feedback"}</h3></div><button className="text-button" onClick={() => setTab("Activity")}>View activity <Icon name="arrow" size={15}/></button></section><section className="activity-card">{selected.activities.slice(0,3).map((a,i) => <ActivityRow activity={a} key={i}/>)}</section></>}
+>>>>>>> 2a1305ce552e80672d256c80082544730af68b73
             
             {tab === "Tasks" && <section className="tasks-card full-card">{selected.tasks.length === 0 ? <div style={{padding:'20px',color:'#777'}}>No tasks yet.</div> : selected.tasks.map(t => <TaskRow task={t} key={t.title}/>)}</section>}
             
             {tab === "Activity" && <section className="activity-card full-card">{dbEvents.length === 0 ? <div style={{padding:'20px',color:'#777'}}>No events recorded yet.</div> : dbEvents.map((ev: any) => <DbActivityRow event={ev} key={ev.id}/>)}</section>}
             
-            {tab === "AI Buddy" && (
-              <section className="tasks-card full-card" style={{padding:'20px', display:'flex', flexDirection:'column', gap:'16px', minHeight:'400px'}}>
-                <div style={{flex:1, overflowY:'auto', display:'flex', flexDirection:'column', gap:'16px', paddingRight:'10px'}}>
-                  {chatMessages.map((msg, i) => (
-                    <motion.div initial={{opacity:0, y:5}} animate={{opacity:1, y:0}} key={i} style={{alignSelf: msg.role === 'user' ? 'flex-end' : 'flex-start', background: msg.role === 'user' ? 'var(--hover-bg)' : 'var(--input-bg)', padding:'12px 16px', borderRadius:'10px', maxWidth:'85%', fontSize:'13px', lineHeight:'1.6', color:'var(--ink)', border:'1px solid var(--input-border)'}}>
-                      <strong style={{display:'block', marginBottom:'6px', color: msg.role === 'user' ? 'var(--brand-color)' : 'var(--ink)'}}>{msg.role === 'user' ? 'You' : 'AI Assistant'}</strong>
-                      {msg.role === 'assistant' ? (
-                        <ReactMarkdown components={{
-                          p: ({node, ...props}) => <p style={{margin: '0 0 8px 0'}} {...props} />,
-                          ul: ({node, ...props}) => <ul style={{margin: '0 0 8px 0', paddingLeft: '20px'}} {...props} />,
-                          li: ({node, ...props}) => <li style={{marginBottom: '4px'}} {...props} />,
-                          strong: ({node, ...props}) => <strong style={{fontWeight: 700}} {...props} />,
-                        }}>{msg.content}</ReactMarkdown>
-                      ) : (
-                        msg.content
-                      )}
-                    </motion.div>
-                  ))}
-                  {isGenerating && (
-                    <motion.div initial={{opacity:0}} animate={{opacity:1}} style={{alignSelf: 'flex-start', background: '#f7f7fb', padding:'12px 16px', borderRadius:'10px', display:'flex', gap:'4px'}}>
-                      <motion.span animate={{y:[0,-5,0]}} transition={{repeat:Infinity, duration:0.6, delay:0}} style={{width:6,height:6,background:'#aaa',borderRadius:'50%',display:'block'}}/>
-                      <motion.span animate={{y:[0,-5,0]}} transition={{repeat:Infinity, duration:0.6, delay:0.2}} style={{width:6,height:6,background:'#aaa',borderRadius:'50%',display:'block'}}/>
-                      <motion.span animate={{y:[0,-5,0]}} transition={{repeat:Infinity, duration:0.6, delay:0.4}} style={{width:6,height:6,background:'#aaa',borderRadius:'50%',display:'block'}}/>
-                    </motion.div>
-                  )}
-                </div>
-                <div style={{display:'flex', gap:'8px', marginTop:'auto'}}>
-                  <input type="text" value={messageInput} onChange={e => setMessageInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleSendMessage()} disabled={isGenerating} placeholder="Ask something..." style={{flex:1, padding:'12px', borderRadius:'8px', border:'1px solid #dedee8', fontSize:'13px'}} />
-                  <button onClick={handleSendMessage} disabled={isGenerating} style={{background:'var(--brand-color)', color:'#fff', border:'0', padding:'0 20px', borderRadius:'8px', fontSize:'13px', fontWeight:'bold', cursor: isGenerating ? 'not-allowed' : 'pointer'}}>Send</button>
-                </div>
-              </section>
-            )}
           </motion.div>
         </AnimatePresence>
       </div>
@@ -476,14 +516,25 @@ export default function Home() {
                 <span className="eyebrow">AI ESTIMATE LOGIC</span>
                 <h2>How AI Scoring Works</h2>
                 <p>Boardy uses an event-driven architecture to evaluate performance silently without intrusive surveillance.</p>
-                <div style={{background:'#f8fafc', padding:'16px', borderRadius:'8px', marginTop:'16px', fontSize:'13px', lineHeight:'1.6', color:'#334155'}}>
-                  <ul style={{paddingLeft:'16px', display:'flex', flexDirection:'column', gap:'8px'}}>
-                    <li><strong>GitHub Commits & PRs:</strong> High impact on technical scores. (+5 points per event)</li>
-                    <li><strong>Jira Tasks:</strong> Tracks velocity and blocker resolution. (+8 points for completion)</li>
-                    <li><strong>MS 365 Documents:</strong> Indicates planning and documentation effort. (+3 points)</li>
-                    <li><strong>Figma & Slack:</strong> Measures collaboration and responsiveness. (+2 to +4 points)</li>
-                  </ul>
-                </div>
+                {viewRole === "Manager" ? (
+                  <div style={{background:'#f8fafc', padding:'16px', borderRadius:'8px', marginTop:'16px', fontSize:'13px', lineHeight:'1.6', color:'#334155'}}>
+                    <ul style={{paddingLeft:'16px', display:'flex', flexDirection:'column', gap:'8px'}}>
+                      <li><strong>GitHub Commits & PRs:</strong> High impact on technical scores. (+5 points per event)</li>
+                      <li><strong>Jira Tasks:</strong> Tracks velocity and blocker resolution. (+8 points for completion)</li>
+                      <li><strong>Code Reviews:</strong> Measures collaboration and code quality. (+3 points)</li>
+                      <li><strong>Incident Resolution:</strong> Responsiveness to critical issues. (+2 to +4 points)</li>
+                    </ul>
+                  </div>
+                ) : (
+                  <div style={{background:'#f8fafc', padding:'16px', borderRadius:'8px', marginTop:'16px', fontSize:'13px', lineHeight:'1.6', color:'#334155'}}>
+                    <ul style={{paddingLeft:'16px', display:'flex', flexDirection:'column', gap:'8px'}}>
+                      <li><strong>Milestone Completion:</strong> Tracks completion of mandatory 30/60/90 day goals. (+5 points)</li>
+                      <li><strong>Peer Feedback:</strong> Aggregates sentiment from Slack/Teams interactions. (+8 points)</li>
+                      <li><strong>1-on-1 Check-ins:</strong> Consistency and quality of manager check-ins. (+3 points)</li>
+                      <li><strong>Culture & Collaboration:</strong> Participation in team events and discussions. (+2 to +4 points)</li>
+                    </ul>
+                  </div>
+                )}
                 <div className="modal-actions" style={{marginTop:'24px'}}>
                   <button className="primary-button" style={{width:'100%'}} onClick={() => setActiveModal(null)}>Got it</button>
                 </div>
@@ -508,10 +559,10 @@ export default function Home() {
               <label>Job title<input placeholder="e.g. Customer Success Manager" value={newStaff.role} onChange={e=>setNewStaff({...newStaff, role:e.target.value})}/></label>
               <label>Start date<input type="date" value={newStaff.date} onChange={e=>setNewStaff({...newStaff, date:e.target.value})}/></label>
             </div>
-            <div className="modal-actions">
-              <button className="cancel-button" onClick={() => setModal(false)}>Cancel</button>
-              <button className="primary-button" onClick={handleAddStaff}>Create profile</button>
-            </div>
+              <div className="modal-actions">
+                <button type="button" className="cancel-button apple-btn" onClick={() => setModal(false)}>Cancel</button>
+                <button type="button" className="primary-button apple-btn metallic-bg" onClick={handleAddStaff}>Add to Probation</button>
+              </div>
           </motion.div>
         </motion.div>
       )}
@@ -521,6 +572,65 @@ export default function Home() {
       {toast && (
         <motion.div initial={{opacity:0, y:20}} animate={{opacity:1, y:0}} exit={{opacity:0, y:20}} className="toast">
           <Icon name="check" size={16}/>{toast}
+        </motion.div>
+      )}
+    </AnimatePresence>
+
+    {/* Floating Chat Widget */}
+    <motion.div 
+      drag 
+      dragMomentum={false}
+      animate={aiButtonControls}
+      onDragEnd={(e, info) => {
+        const isLeft = info.point.x < window.innerWidth / 2;
+        aiButtonControls.start({
+          x: isLeft ? -window.innerWidth + 116 : 0,
+          transition: { type: "spring", stiffness: 300, damping: 25 }
+        });
+      }}
+      className="floating-chat-btn" 
+      style={{ background: 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)', border: '1px solid #334155', boxShadow: '0 8px 30px rgba(0,0,0,0.3)' }}
+      onClick={() => setShowChat(!showChat)}
+    >
+      <Icon name={showChat ? "plus" : "sparkles"} size={22} style={{ color: '#fff', transform: showChat ? 'rotate(45deg)' : 'none', transition: '0.3s' }}/>
+    </motion.div>
+
+    <AnimatePresence>
+      {showChat && (
+        <motion.div initial={{opacity:0, y:20, scale:0.95}} animate={{opacity:1, y:0, scale:1}} exit={{opacity:0, y:20, scale:0.95}} transition={{duration:0.2}} className="floating-chat-window">
+          <div className="chat-header">
+            <h3><Icon name="sparkles" size={18} style={{color:'var(--brand-color)'}}/> AI Buddy</h3>
+            <button style={{background:'transparent', border:0, cursor:'pointer', color:'var(--muted)'}} onClick={() => setShowChat(false)}><Icon name="dots" size={18}/></button>
+          </div>
+          
+          <div className="chat-body" style={{background:'transparent'}}>
+            {chatMessages.map((msg, i) => (
+              <motion.div initial={{opacity:0, y:5}} animate={{opacity:1, y:0}} key={i} className={`chat-msg ${msg.role === 'user' ? 'user' : 'ai'}`}>
+                {msg.role === 'assistant' ? (
+                  <ReactMarkdown components={{
+                    p: ({node, ...props}) => <p style={{margin: '0 0 8px 0'}} {...props} />,
+                    ul: ({node, ...props}) => <ul style={{margin: '0 0 8px 0', paddingLeft: '20px'}} {...props} />,
+                    li: ({node, ...props}) => <li style={{marginBottom: '4px'}} {...props} />,
+                    strong: ({node, ...props}) => <strong style={{fontWeight: 700}} {...props} />,
+                  }}>{msg.content}</ReactMarkdown>
+                ) : (
+                  msg.content
+                )}
+              </motion.div>
+            ))}
+            {isGenerating && (
+              <motion.div initial={{opacity:0}} animate={{opacity:1}} className="chat-msg ai" style={{display:'flex', flexDirection:'row', gap:'4px', alignItems:'center', padding:'16px'}}>
+                <motion.span animate={{y:[0,-5,0]}} transition={{repeat:Infinity, duration:0.6, delay:0}} style={{width:6,height:6,background:'#aaa',borderRadius:'50%',display:'block'}}/>
+                <motion.span animate={{y:[0,-5,0]}} transition={{repeat:Infinity, duration:0.6, delay:0.2}} style={{width:6,height:6,background:'#aaa',borderRadius:'50%',display:'block'}}/>
+                <motion.span animate={{y:[0,-5,0]}} transition={{repeat:Infinity, duration:0.6, delay:0.4}} style={{width:6,height:6,background:'#aaa',borderRadius:'50%',display:'block'}}/>
+              </motion.div>
+            )}
+          </div>
+
+          <div className="chat-input-area">
+            <input type="text" value={messageInput} onChange={e => setMessageInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleSendMessage()} disabled={isGenerating} placeholder="Ask about this employee..." />
+            <button onClick={handleSendMessage} disabled={isGenerating} className="metallic-bg"><Icon name="arrow" size={16} style={{transform:'rotate(90deg)'}}/></button>
+          </div>
         </motion.div>
       )}
     </AnimatePresence>

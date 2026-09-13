@@ -5,7 +5,7 @@ import { NextRequest, NextResponse } from "next/server";
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { messages, userId } = body;
+    const { messages, userId, viewRole = "Manager" } = body;
 
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) {
@@ -69,13 +69,23 @@ Current Status: ${user.status}`;
       systemPrompt += `\n\n═══ PAST AI SUMMARIES ═══\n${summariesContext}`;
     }
 
+    if (viewRole === "HR") {
+      systemPrompt += `\n\nROLE CONTEXT (HR): You are speaking to an HR professional. Focus on the employee's onboarding experience, well-being, culture fit, and general progress. Avoid getting bogged down in deep technical details (like code additions or specific Jira bugs) unless they signal a major blocker. Your tone should be supportive and people-centric.`;
+    } else {
+      systemPrompt += `\n\nROLE CONTEXT (Manager): You are speaking to a Manager. Focus on the employee's technical output, velocity, blockers, task completion, and concrete deliverables. Highlight specific data points from GitHub, Jira, and Slack. Your tone should be analytical, objective, and performance-oriented.`;
+    }
+
     systemPrompt += `\n\nUse ALL the above data to answer the user's questions accurately. If they ask about activity, tasks, or progress, reference the specific event logs.`;
 
     const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: "gemini-3.6-flash" });
+    const model = genAI.getGenerativeModel({ model: "gemini-3.5-flash" });
 
-    // Build chat history for Gemini
-    const chatHistory = messages.slice(0, -1).map((m: any) => ({
+    // Build chat history for Gemini (skip the first initial assistant greeting to prevent model-model role collision)
+    const historyMessages = messages.length > 0 && messages[0].content.startsWith("Hi, I'm your AI")
+      ? messages.slice(1, -1)
+      : messages.slice(0, -1);
+      
+    const chatHistory = historyMessages.map((m: any) => ({
       role: m.role === "assistant" ? "model" : "user",
       parts: [{ text: m.content }],
     }));
@@ -89,12 +99,27 @@ Current Status: ${user.status}`;
     });
 
     const lastMessage = messages[messages.length - 1].content;
-    const result = await chat.sendMessage(lastMessage);
-    const text = result.response.text();
+    const result = await chat.sendMessageStream(lastMessage);
 
-    return NextResponse.json({ success: true, text });
+    const stream = new ReadableStream({
+      async start(controller) {
+        try {
+          for await (const chunk of result.stream) {
+            const chunkText = chunk.text();
+            controller.enqueue(new TextEncoder().encode(chunkText));
+          }
+          controller.close();
+        } catch (e) {
+          controller.error(e);
+        }
+      }
+    });
+
+    return new Response(stream, {
+      headers: { "Content-Type": "text/plain; charset=utf-8" },
+    });
   } catch (error: any) {
     console.error("Chat error:", error);
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    return new Response(error.message, { status: 500 });
   }
 }
