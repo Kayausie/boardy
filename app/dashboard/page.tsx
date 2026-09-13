@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, useAnimation } from "framer-motion";
 import ReactMarkdown from "react-markdown";
 import GridView from '../components/GridView';
 import TasksView from '../components/TasksView';
@@ -112,6 +112,7 @@ export default function Home() {
   const [chatMessages, setChatMessages] = useState([{ role: "assistant", content: "Hi, I'm your AI Assessment Assistant. I can analyze employee progress, activities, and identify blockers. What would you like to know?" }]);
   const [messageInput, setMessageInput] = useState("");
   const [showChat, setShowChat] = useState(false);
+  const aiButtonControls = useAnimation();
   
   const [newStaff, setNewStaff] = useState({ name: "", dept: "", role: "", date: "" });
 
@@ -509,9 +510,23 @@ export default function Home() {
     </AnimatePresence>
 
     {/* Floating Chat Widget */}
-    <div className="floating-chat-btn metallic-bg" onClick={() => setShowChat(!showChat)}>
-      <Icon name={showChat ? "plus" : "sparkles"} size={24} style={{ transform: showChat ? 'rotate(45deg)' : 'none', transition: '0.3s' }}/>
-    </div>
+    <motion.div 
+      drag 
+      dragMomentum={false}
+      animate={aiButtonControls}
+      onDragEnd={(e, info) => {
+        const isLeft = info.point.x < window.innerWidth / 2;
+        aiButtonControls.start({
+          x: isLeft ? -window.innerWidth + 116 : 0,
+          transition: { type: "spring", stiffness: 300, damping: 25 }
+        });
+      }}
+      className="floating-chat-btn" 
+      style={{ background: 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)', border: '1px solid #334155', boxShadow: '0 8px 30px rgba(0,0,0,0.3)' }}
+      onClick={() => setShowChat(!showChat)}
+    >
+      <Icon name={showChat ? "plus" : "sparkles"} size={22} style={{ color: '#fff', transform: showChat ? 'rotate(45deg)' : 'none', transition: '0.3s' }}/>
+    </motion.div>
 
     <AnimatePresence>
       {showChat && (
