@@ -1,4 +1,4 @@
-import db from "@/lib/db";
+import { getSql, initializeDatabase } from "@/lib/db";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -12,16 +12,21 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: false, error: "GEMINI_API_KEY not configured" }, { status: 500 });
     }
 
+    await initializeDatabase();
+    const sql = getSql();
     // Fetch user data from DB
-    const user = db.prepare(`SELECT * FROM users WHERE id = ?`).get(Number(userId)) as any;
+    const userRows = await sql`SELECT * FROM users WHERE id = ${Number(userId)}`;
+    const user = userRows[0] as any;
     if (!user) {
       return NextResponse.json({ success: false, error: "User not found" }, { status: 404 });
     }
 
     // Fetch recent events (last 48 hours)
-    const events = db.prepare(
-      `SELECT * FROM event_logs WHERE user_id = ? AND timestamp >= datetime('now', '-2 days') ORDER BY timestamp DESC`
-    ).all(Number(userId)) as any[];
+    const events = await sql`
+      SELECT * FROM event_logs
+      WHERE user_id = ${Number(userId)} AND timestamp >= NOW() - INTERVAL '2 days'
+      ORDER BY timestamp DESC
+    ` as any[];
 
     // Build the event context string
     const eventsContext = events.map((e: any) => {
@@ -86,9 +91,7 @@ Be direct, data-driven, and specific. Use markdown formatting.`;
     const summaryText = result.response.text();
 
     // Save summary to DB
-    db.prepare(
-      `INSERT INTO summaries (user_id, role, content) VALUES (?, ?, ?)`
-    ).run(userId, role || "Manager", summaryText);
+    await sql`INSERT INTO summaries (user_id, role, content) VALUES (${Number(userId)}, ${role || "Manager"}, ${summaryText})`;
 
     return NextResponse.json({ success: true, summary: summaryText, role: role || "Manager" });
   } catch (error: any) {

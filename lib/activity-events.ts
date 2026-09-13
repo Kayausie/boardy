@@ -1,4 +1,4 @@
-import db from "@/lib/db";
+import { getSql, initializeDatabase } from "@/lib/db";
 
 export type ActivityEventInput = {
   userId: number;
@@ -12,7 +12,7 @@ export type ActivityEventInput = {
 
 export type ActivityEventResult = {
   duplicate: boolean;
-  eventId?: number | bigint;
+  eventId?: number;
   scoreBoost: number;
   newScore: number;
   newStatus: string;
@@ -35,10 +35,7 @@ function scoreStatus(score: number) {
   return "Needs support";
 }
 
-export function recordActivityEvent(input: ActivityEventInput): ActivityEventResult {
-  const user = db.prepare("SELECT id FROM users WHERE id = ?").get(input.userId);
-  if (!user) throw new Error("Employee not found");
-
+export async function recordActivityEvent(input: ActivityEventInput): Promise<ActivityEventResult> {
   const safeSource = input.source.trim().slice(0, 60).toLowerCase();
   const safeType = input.eventType.trim().slice(0, 80).toLowerCase();
   const safeDescription = input.description.trim().slice(0, 280);
@@ -51,35 +48,30 @@ export function recordActivityEvent(input: ActivityEventInput): ActivityEventRes
     throw new Error("Activity source, type, and description are required");
   }
 
-  if (safeExternalId) {
-    const existing = db.prepare(
-      "SELECT id FROM event_logs WHERE source = ? AND external_id = ?"
-    ).get(safeSource, safeExternalId) as { id: number } | undefined;
+  await initializeDatabase();
+  const sql = getSql();
+  const users = await sql`SELECT id, score, status FROM users WHERE id = ${input.userId}`;
+  const user = users[0] as { id: number; score: number; status: string } | undefined;
+  if (!user) throw new Error("Employee not found");
 
+  if (safeExternalId) {
+    const existingRows = await sql`SELECT id FROM event_logs WHERE source = ${safeSource} AND external_id = ${safeExternalId}`;
+    const existing = existingRows[0] as { id: number } | undefined;
     if (existing) {
-      const current = db.prepare("SELECT score, status FROM users WHERE id = ?").get(input.userId) as { score: number; status: string };
-      return { duplicate: true, eventId: existing.id, scoreBoost: 0, newScore: current.score, newStatus: current.status };
+      return { duplicate: true, eventId: existing.id, scoreBoost: 0, newScore: user.score, newStatus: user.status };
     }
   }
 
   const scoreBoost = scoreBoosts[safeType] ?? 1;
-  const insert = db.prepare(
-    `INSERT INTO event_logs (user_id, event_type, description, payload, timestamp, source, external_id)
-     VALUES (?, ?, ?, ?, ?, ?, ?)`
-  ).run(
-    input.userId,
-    safeType,
-    safeDescription,
-    JSON.stringify(input.payload ?? {}),
-    timestamp,
-    safeSource,
-    safeExternalId,
-  );
+  const insertedRows = await sql`
+    INSERT INTO event_logs (user_id, event_type, description, payload, timestamp, source, external_id)
+    VALUES (${input.userId}, ${safeType}, ${safeDescription}, ${JSON.stringify(input.payload ?? {})}, ${timestamp}, ${safeSource}, ${safeExternalId})
+    RETURNING id
+  `;
+  const inserted = insertedRows[0] as { id: number };
+  const newScore = Math.min(100, user.score + scoreBoost);
+  const newStatus = scoreStatus(newScore);
+  await sql`UPDATE users SET score = ${newScore}, status = ${newStatus} WHERE id = ${input.userId}`;
 
-  db.prepare("UPDATE users SET score = MIN(100, score + ?) WHERE id = ?").run(scoreBoost, input.userId);
-  const updatedUser = db.prepare("SELECT score FROM users WHERE id = ?").get(input.userId) as { score: number };
-  const newStatus = scoreStatus(updatedUser.score);
-  db.prepare("UPDATE users SET status = ? WHERE id = ?").run(newStatus, input.userId);
-
-  return { duplicate: false, eventId: insert.lastInsertRowid, scoreBoost, newScore: updatedUser.score, newStatus };
+  return { duplicate: false, eventId: inserted.id, scoreBoost, newScore, newStatus };
 }

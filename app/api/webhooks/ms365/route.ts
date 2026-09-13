@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import db from "@/lib/db";
+import { getSql, initializeDatabase } from "@/lib/db";
+import { recordActivityEvent } from "@/lib/activity-events";
 
 // Types for MS365 Graph Webhook Payload
 interface GraphEventResource {
@@ -41,29 +42,30 @@ export async function POST(req: NextRequest) {
       const description = `[${type}] ${details}`;
       const nameFromEmail = email.split('@')[0].replace('.', ' ');
 
-      // Upsert equivalent logic using SQLite for Hackathon MVP
-      const stmtFind = db.prepare("SELECT id FROM users WHERE name LIKE ?");
-      let user = (stmtFind.get(`%${nameFromEmail}%`)) as { id: number } | undefined;
+      await initializeDatabase();
+      const sql = getSql();
+      const matchingUsers = await sql`SELECT id FROM users WHERE name ILIKE ${`%${nameFromEmail}%`} LIMIT 1`;
+      let user = matchingUsers[0] as { id: number } | undefined;
       
       if (!user) {
         // Create a dummy user to prevent FK constraint crashes (Demo Safety)
         const initials = nameFromEmail.substring(0, 2).toUpperCase() || "MS";
-        const stmtInsert = db.prepare(`
+        const created = await sql`
           INSERT INTO users (name, initials, role, department, start_date, remaining, score, status, color)
-          VALUES (?, ?, 'Employee (Auto-created)', 'General', date('now'), 90, 50, 'Well done', '#cbd5e1')
-        `);
-        const info = stmtInsert.run(nameFromEmail, initials);
-        user = { id: info.lastInsertRowid as number };
+          VALUES (${nameFromEmail}, ${initials}, 'Employee (Auto-created)', 'General', ${new Date().toISOString().slice(0, 10)}, 90, 50, 'Well done', '#cbd5e1')
+          RETURNING id
+        `;
+        user = created[0] as { id: number };
       }
 
-      // Save EventLog
-      db.prepare(`
-        INSERT INTO event_logs (user_id, event_type, description, payload)
-        VALUES (?, 'ms365', ?, ?)
-      `).run(user.id, description, JSON.stringify(event));
-
-      // Update score safely
-      db.prepare(`UPDATE users SET score = CASE WHEN score + 2 > 100 THEN 100 ELSE score + 2 END WHERE id = ?`).run(user.id);
+      await recordActivityEvent({
+        userId: user.id,
+        source: "ms365",
+        eventType: "ms365_document",
+        description,
+        externalId: event.id ?? event.resourceData?.id,
+        payload: event as Record<string, unknown>,
+      });
     }
 
     // Microsoft best practice for webhook processing: 202 Accepted

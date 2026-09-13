@@ -1,2 +1,2 @@
-// This file is no longer used. Database is now managed via better-sqlite3 in lib/db.ts
+// This file is no longer used. Boardy uses Neon through lib/db.ts.
 export {};

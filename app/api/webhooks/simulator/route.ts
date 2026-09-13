@@ -13,7 +13,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const result = recordActivityEvent({
+    const result = await recordActivityEvent({
       userId: Number(userId),
       source: "simulator",
       eventType,

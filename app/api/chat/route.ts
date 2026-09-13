@@ -1,4 +1,4 @@
-import db from "@/lib/db";
+import { getSql, initializeDatabase } from "@/lib/db";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -12,15 +12,16 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: false, error: "GEMINI_API_KEY not configured" }, { status: 500 });
     }
 
-    // RAG: Retrieve user data and events from SQLite
-    const user = userId ? db.prepare(`SELECT * FROM users WHERE id = ?`).get(Number(userId)) as any : null;
-    
+    await initializeDatabase();
+    const sql = getSql();
+    // RAG: Retrieve user data and events from the shared database.
+    const userRows = userId ? await sql`SELECT * FROM users WHERE id = ${Number(userId)}` : [];
+    const user = userRows[0] as any;
     const events = userId
-      ? db.prepare(`SELECT * FROM event_logs WHERE user_id = ? ORDER BY timestamp DESC LIMIT 30`).all(Number(userId)) as any[]
+      ? await sql`SELECT * FROM event_logs WHERE user_id = ${Number(userId)} ORDER BY timestamp DESC LIMIT 30` as any[]
       : [];
-
     const pastSummaries = userId
-      ? db.prepare(`SELECT * FROM summaries WHERE user_id = ? ORDER BY created_at DESC LIMIT 5`).all(Number(userId)) as any[]
+      ? await sql`SELECT * FROM summaries WHERE user_id = ${Number(userId)} ORDER BY created_at DESC LIMIT 5` as any[]
       : [];
 
     // Build RAG context
@@ -51,7 +52,7 @@ Current Status: ${user.status}`;
     }
 
     if (eventsContext) {
-      systemPrompt += `\n\n═══ RECENT EVENT LOGS (RAG Retrieved from SQLite) ═══\n${eventsContext}`;
+      systemPrompt += `\n\n═══ RECENT EVENT LOGS (RAG Retrieved from the database) ═══\n${eventsContext}`;
     }
 
     if (summariesContext) {

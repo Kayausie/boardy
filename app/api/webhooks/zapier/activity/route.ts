@@ -51,7 +51,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const result = recordActivityEvent({
+    const result = await recordActivityEvent({
       userId,
       source: body.source,
       eventType: body.eventType,

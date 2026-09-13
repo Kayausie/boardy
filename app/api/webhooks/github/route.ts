@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import crypto from "crypto";
-import db from "@/lib/db";
+import { getSql, initializeDatabase } from "@/lib/db";
+import { recordActivityEvent } from "@/lib/activity-events";
 
 // Types for incoming GitHub payload
 interface GitHubPushPayload {
   pusher?: { name?: string; email?: string };
   sender?: { login?: string };
-  head_commit?: { message?: string };
+  head_commit?: { id?: string; message?: string; timestamp?: string };
   repository?: { name?: string };
 }
 
@@ -42,31 +43,33 @@ export async function POST(req: NextRequest) {
     
     const description = `Pushed to ${repo}: ${commitMsg}`;
     
-    // Upsert equivalent logic using SQLite for Hackathon MVP
-    const stmtFind = db.prepare("SELECT id FROM users WHERE name LIKE ? OR initials LIKE ?");
-    let user = stmtFind.get(`%${pusher}%`, `%${pusher.substring(0, 2)}%`) as { id: number } | undefined;
+    await initializeDatabase();
+    const sql = getSql();
+    const matchingUsers = await sql`
+      SELECT id FROM users WHERE name ILIKE ${`%${pusher}%`} OR initials ILIKE ${`%${pusher.substring(0, 2)}%`} LIMIT 1
+    `;
+    let user = matchingUsers[0] as { id: number } | undefined;
     
     if (!user) {
       // Create a dummy user to prevent FK constraint crashes (Demo Safety)
       const initials = pusher.substring(0, 2).toUpperCase() || "GH";
-      const stmtInsert = db.prepare(`
+      const created = await sql`
         INSERT INTO users (name, initials, role, department, start_date, remaining, score, status, color)
-        VALUES (?, ?, 'Developer (Auto-created)', 'Engineering', date('now'), 90, 50, 'Well done', '#cbd5e1')
-      `);
-      const info = stmtInsert.run(pusher, initials);
-      user = { id: info.lastInsertRowid as number };
+        VALUES (${pusher}, ${initials}, 'Developer (Auto-created)', 'Engineering', ${new Date().toISOString().slice(0, 10)}, 90, 50, 'Well done', '#cbd5e1')
+        RETURNING id
+      `;
+      user = created[0] as { id: number };
     }
-    
-    // Save EventLog
-    const stmtLog = db.prepare(`
-      INSERT INTO event_logs (user_id, event_type, description, payload)
-      VALUES (?, 'github', ?, ?)
-    `);
-    
-    stmtLog.run(user.id, description, rawBody);
-    
-    // Auto-update score safely
-    db.prepare(`UPDATE users SET score = CASE WHEN score + 5 > 100 THEN 100 ELSE score + 5 END WHERE id = ?`).run(user.id);
+
+    await recordActivityEvent({
+      userId: user.id,
+      source: "github",
+      eventType: "github_commit",
+      description,
+      occurredAt: payload.head_commit?.timestamp,
+      externalId: payload.head_commit?.id,
+      payload: payload as Record<string, unknown>,
+    });
 
     return NextResponse.json({ message: "Success" }, { status: 200 });
   } catch (error: any) {
