@@ -81,7 +81,7 @@ Be direct, data-driven, and specific. Use markdown formatting.`;
     }
 
     const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: "gemini-3.7-flash" });
+    const model = genAI.getGenerativeModel({ model: "gemini-3.5-flash" });
     const result = await model.generateContent(prompt);
     const summaryText = result.response.text();
 
