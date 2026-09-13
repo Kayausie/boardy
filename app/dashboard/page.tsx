@@ -179,11 +179,28 @@ export default function Home() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ messages: newMessages, userId: selected.id, viewRole })
       });
-      const data = await res.json();
-      if (data.success) {
-        setChatMessages([...newMessages, { role: "assistant", content: data.text }]);
-      } else {
-        notify("Gemini Error: " + data.error);
+      if (!res.ok) {
+        const err = await res.text();
+        notify("Gemini Error: " + err);
+        return;
+      }
+      if (!res.body) throw new Error("No response body");
+
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let aiText = "";
+      
+      setChatMessages(prev => [...prev, { role: "assistant", content: "" }]);
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        aiText += decoder.decode(value, { stream: true });
+        setChatMessages(prev => {
+          const updated = [...prev];
+          updated[updated.length - 1].content = aiText;
+          return updated;
+        });
       }
     } catch (e) {
       console.error(e);
@@ -205,11 +222,28 @@ export default function Home() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ messages: newMessages, userId: selected.id, viewRole })
       });
-      const data = await res.json();
-      if (data.success) {
-        setChatMessages([...newMessages, { role: "assistant", content: data.text }]);
-      } else {
-        notify("Gemini Error: " + data.error);
+      if (!res.ok) {
+        const err = await res.text();
+        notify("Gemini Error: " + err);
+        return;
+      }
+      if (!res.body) throw new Error("No response body");
+
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let aiText = "";
+      
+      setChatMessages(prev => [...prev, { role: "assistant", content: "" }]);
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        aiText += decoder.decode(value, { stream: true });
+        setChatMessages(prev => {
+          const updated = [...prev];
+          updated[updated.length - 1].content = aiText;
+          return updated;
+        });
       }
     } catch (e) {
       notify("Failed to connect to AI Buddy.");
