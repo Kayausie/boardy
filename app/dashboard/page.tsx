@@ -154,8 +154,7 @@ export default function Home() {
     }
   }, [selected?.id]);
 
-<<<<<<< HEAD
-  const ai = estimation[selected?.status] || estimation["Needs support"]; 
+  const ai = getEstimation(selected?.status, viewRole);
   const taskProgress = selected?.tasks?.length
     ? Math.round(selected.tasks.reduce((sum, task) => sum + task.progress, 0) / selected.tasks.length)
     : null;
@@ -164,10 +163,6 @@ export default function Home() {
   const performanceCopy = selected?.tasks?.length
     ? `${completedTasks} of ${selected.tasks.length} assigned tasks complete; average task progress is ${taskProgress}%. ${ai.copy}`
     : ai.copy;
-=======
-  const ai = getEstimation(selected?.status, viewRole);
-  const progress = Math.round((90 - (selected?.remaining || 60)) / 90 * 100);
->>>>>>> 2a1305ce552e80672d256c80082544730af68b73
   const notify = (text: string) => { setToast(text); window.setTimeout(() => setToast(""), 2800); };
 
   const handleGenerateSummary = async () => {
@@ -443,11 +438,7 @@ export default function Home() {
         
         <AnimatePresence mode="wait">
           <motion.div key={tab} initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -10 }} transition={{ duration: 0.2 }}>
-<<<<<<< HEAD
-            {tab === "Overview" && <><section className="section-topline"><div><span className="eyebrow">ONBOARDING HEALTH</span><h3>Milestone progress</h3></div><button className="text-button" onClick={() => setActiveModal("how-it-works")}>How it works <Icon name="arrow" size={15}/></button></section><section className="estimate-grid"><article className={`score-card ${ai.tone}`}><div className="score-card-head"><span>Overall health</span><Icon name="sparkles" size={18}/></div><div className="score-content"><div className="score-ring" style={{"--score":`${progress * 3.6}deg`} as React.CSSProperties}><div><strong>{progress}</strong><span>%</span></div></div><div><h4>{selected.status}</h4><p>{performanceCopy}</p></div></div><div className="score-foot"><span>Based on tasks, activity & feedback</span><button onClick={handleAskDetails}>View details <Icon name="arrow" size={14}/></button></div></article><article className="signals-card"><div className="card-title"><div><span className="eyebrow">KEY SIGNALS</span><h3>What’s driving this</h3></div><div style={{position:'relative'}}><button className="more-button" onClick={() => setShowSignalsMenu(!showSignalsMenu)}><Icon name="dots" size={18}/></button>
-=======
-            {tab === "Overview" && <><section className="section-topline"><div><span className="eyebrow">{viewRole === "Manager" ? "ONBOARDING HEALTH" : "CULTURE & FIT"}</span><h3>{viewRole === "Manager" ? "Milestone progress" : "Onboarding sentiment"}</h3></div><button className="text-button" onClick={() => setActiveModal("how-it-works")}>How it works <Icon name="arrow" size={15}/></button></section><section className="estimate-grid"><article className={`score-card ${ai.tone}`}><div className="score-card-head"><span>{viewRole === "Manager" ? "Overall health" : "Culture fit"}</span><Icon name="sparkles" size={18}/></div><div className="score-content"><div className="score-ring" style={{"--score":`${progress * 3.6}deg`} as React.CSSProperties}><div><strong><span className="metallic-text">{progress}</span></strong><span>%</span></div></div><div><h4>{selected.status}</h4><p>{ai.copy}</p></div></div><div className="score-foot"><span>Based on tasks, activity & feedback</span><button onClick={handleAskDetails}>View details <Icon name="arrow" size={14}/></button></div></article><article className="signals-card"><div className="card-title"><div><span className="eyebrow">KEY SIGNALS</span><h3>What’s driving this</h3></div><div style={{position:'relative'}}><button className="more-button" onClick={() => setShowSignalsMenu(!showSignalsMenu)}><Icon name="dots" size={18}/></button>
->>>>>>> 2a1305ce552e80672d256c80082544730af68b73
+            {tab === "Overview" && <><section className="section-topline"><div><span className="eyebrow">{viewRole === "Manager" ? "ONBOARDING HEALTH" : "CULTURE & FIT"}</span><h3>{viewRole === "Manager" ? "Milestone progress" : "Onboarding sentiment"}</h3></div><button className="text-button" onClick={() => setActiveModal("how-it-works")}>How it works <Icon name="arrow" size={15}/></button></section><section className="estimate-grid"><article className={`score-card ${ai.tone}`}><div className="score-card-head"><span>{viewRole === "Manager" ? "Overall health" : "Culture fit"}</span><Icon name="sparkles" size={18}/></div><div className="score-content"><div className="score-ring" style={{"--score":`${progress * 3.6}deg`} as React.CSSProperties}><div><strong><span className="metallic-text">{progress}</span></strong><span>%</span></div></div><div><h4>{selected.status}</h4><p>{performanceCopy}</p></div></div><div className="score-foot"><span>Based on tasks, activity & feedback</span><button onClick={handleAskDetails}>View details <Icon name="arrow" size={14}/></button></div></article><article className="signals-card"><div className="card-title"><div><span className="eyebrow">KEY SIGNALS</span><h3>What’s driving this</h3></div><div style={{position:'relative'}}><button className="more-button" onClick={() => setShowSignalsMenu(!showSignalsMenu)}><Icon name="dots" size={18}/></button>
               <AnimatePresence>
                 {showSignalsMenu && (
                   <motion.div initial={{opacity:0, scale:0.95}} animate={{opacity:1, scale:1}} exit={{opacity:0, scale:0.95}} className="dropdown-menu" style={{position:'absolute', top:'100%', right:0, marginTop:'4px', background:'#fff', border:'1px solid #e2e8f0', borderRadius:'8px', minWidth:'180px', boxShadow:'0 4px 12px rgba(0,0,0,0.1)', zIndex:100, padding:'4px', display:'flex', flexDirection:'column'}}>
@@ -456,9 +447,6 @@ export default function Home() {
                   </motion.div>
                 )}
               </AnimatePresence>
-<<<<<<< HEAD
-            </div></div><div className="signals"><Signal icon="check" color="purple" title={`${completedTasks} of ${selected.tasks.length || 0} tasks complete`} body={taskProgress === null ? "Waiting for task data" : `Average progress ${taskProgress}%`} impact={taskProgress === null ? "—" : "+12"}/><Signal icon="message" color="blue" title={dbEvents.length ? `${dbEvents.length} activity signals` : "Responsive collaboration"} body={dbEvents.length ? "Captured from connected tools" : "Awaiting connected-tool activity"} impact={dbEvents.length ? "+8" : "—"}/><Signal icon="clipboard" color="orange" title={taskProgress !== null && taskProgress < 65 ? "Growth opportunity" : "On track"} body={taskProgress !== null && taskProgress < 65 ? "Focus on the lowest-progress task" : "Task delivery is tracking well"} impact="—"/></div></article></section><section className="section-topline task-heading"><div><span className="eyebrow">CURRENT WORK</span><h3>Assigned tasks</h3></div><button className="text-button" onClick={() => setTab("Tasks")}>View all tasks <Icon name="arrow" size={15}/></button></section><section className="tasks-card">{selected.tasks.map(t => <TaskRow task={t} key={t.title}/>)}</section><section className="section-topline activity-heading"><div><span className="eyebrow">RECENT ACTIVITY</span><h3>Latest updates</h3></div><button className="text-button" onClick={() => setTab("Activity")}>View activity <Icon name="arrow" size={15}/></button></section><section className="activity-card">{selected.activities.slice(0,3).map((a,i) => <ActivityRow activity={a} key={i}/>)}</section></>}
-=======
             </div></div>
             {viewRole === "Manager" ? (
               <div className="signals"><Signal icon="check" color="purple" title={`${selected.tasks.filter(t => t.progress === 100).length + 4} technical tasks closed`} body="High velocity on assigned sprint" impact="+12"/><Signal icon="upload" color="blue" title="Consistent code quality" body="Low PR rejection rate" impact="+8"/><Signal icon="clipboard" color="orange" title="Growth opportunity" body="System architecture understanding" impact="—"/></div>
@@ -466,7 +454,6 @@ export default function Home() {
               <div className="signals"><Signal icon="check" color="purple" title="Onboarding milestones met" body="Completed all induction sessions" impact="+12"/><Signal icon="message" color="blue" title="Responsive collaboration" body="Highly active in team channels" impact="+8"/><Signal icon="clipboard" color="orange" title="Growth opportunity" body="Cross-departmental networking" impact="—"/></div>
             )}
             </article></section><section className="section-topline task-heading"><div><span className="eyebrow">{viewRole === "Manager" ? "CURRENT WORK" : "CORE ROADMAP"}</span><h3>{viewRole === "Manager" ? "Assigned tasks" : "Onboarding Milestones"}</h3></div><button className="text-button" onClick={() => setTab("Tasks")}>View all tasks <Icon name="arrow" size={15}/></button></section><section className="tasks-card">{selected.tasks.map(t => <TaskRow task={t} key={t.title}/>)}</section><section className="section-topline activity-heading"><div><span className="eyebrow">{viewRole === "Manager" ? "RECENT ACTIVITY" : "TEAM ENGAGEMENT"}</span><h3>{viewRole === "Manager" ? "Latest updates" : "Social & Feedback"}</h3></div><button className="text-button" onClick={() => setTab("Activity")}>View activity <Icon name="arrow" size={15}/></button></section><section className="activity-card">{selected.activities.slice(0,3).map((a,i) => <ActivityRow activity={a} key={i}/>)}</section></>}
->>>>>>> 2a1305ce552e80672d256c80082544730af68b73
             
             {tab === "Tasks" && <section className="tasks-card full-card">{selected.tasks.length === 0 ? <div style={{padding:'20px',color:'#777'}}>No tasks yet.</div> : selected.tasks.map(t => <TaskRow task={t} key={t.title}/>)}</section>}
             
