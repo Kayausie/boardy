@@ -3,6 +3,7 @@
 import { useMemo, useState, useEffect } from "react";
 import { motion, AnimatePresence, useAnimation } from "framer-motion";
 import ReactMarkdown from "react-markdown";
+import Link from "next/link";
 import GridView from '../components/GridView';
 import TasksView from '../components/TasksView';
 import ChartView from '../components/ChartView';
@@ -283,7 +284,7 @@ export default function Home() {
   };
 
   return <main className="app-shell">
-    <aside className="side-rail"><div className="brand-mark">P</div><nav className="rail-nav" aria-label="Primary navigation"><button className={`rail-item ${currentView === 'grid' ? 'active' : ''}`} onClick={() => setCurrentView('grid')}><Icon name="grid" /></button><button className={`rail-item ${currentView === 'people' ? 'active' : ''}`} onClick={() => setCurrentView('people')}><Icon name="people" /></button><button className={`rail-item ${currentView === 'tasks' ? 'active' : ''}`} onClick={() => setCurrentView('tasks')}><Icon name="check" /></button><button className={`rail-item ${currentView === 'chart' ? 'active' : ''}`} onClick={() => setCurrentView('chart')}><Icon name="chart" /></button></nav><button className="rail-item rail-bottom" onClick={() => setIsDarkMode(!isDarkMode)}><Icon name={isDarkMode ? "sun" : "moon"} /></button><button className="rail-item" style={{marginBottom:'10px'}} onClick={() => setActiveModal("settings")}><Icon name="settings" /></button></aside>
+    <aside className="side-rail"><Link href="/" style={{ display: "flex", alignItems: "baseline", textDecoration: "none", color: "inherit" }}><span style={{ fontWeight: 800, fontSize: 18, letterSpacing: -1 }}>Boardy</span><span className="metallic-text" style={{ fontWeight: 900, fontSize: 26, lineHeight: 0.5 }}>.</span></Link><nav className="rail-nav" aria-label="Primary navigation"><button className={`rail-item ${currentView === 'grid' ? 'active' : ''}`} onClick={() => setCurrentView('grid')}><Icon name="grid" /></button><button className={`rail-item ${currentView === 'people' ? 'active' : ''}`} onClick={() => setCurrentView('people')}><Icon name="people" /></button><button className={`rail-item ${currentView === 'tasks' ? 'active' : ''}`} onClick={() => setCurrentView('tasks')}><Icon name="check" /></button><button className={`rail-item ${currentView === 'chart' ? 'active' : ''}`} onClick={() => setCurrentView('chart')}><Icon name="chart" /></button></nav><button className="rail-item rail-bottom" onClick={() => setIsDarkMode(!isDarkMode)}><Icon name={isDarkMode ? "sun" : "moon"} /></button><button className="rail-item" style={{marginBottom:'10px'}} onClick={() => setActiveModal("settings")}><Icon name="settings" /></button></aside>
     {currentView === 'people' && (
       <>
       <section className="staff-panel">
