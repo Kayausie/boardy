@@ -46,10 +46,26 @@ const iconPaths: Record<string, React.ReactNode> = {
 };
 function Icon({ name, size = 18, className, style }: { name: string; size?: number; className?: string; style?: React.CSSProperties }) { return <svg width={size} height={size} className={className} style={style} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{iconPaths[name]}</svg>; }
 
-const estimation = {
-  "Above & beyond": { copy: "Consistently moving work forward independently and contributing beyond core responsibilities.", tone: "excellent" },
-  "Well done": { copy: "Meeting role expectations with steady delivery and a healthy ramp-up trajectory.", tone: "good" },
-  "Needs support": { copy: "Would benefit from a focused check-in and a clear plan to build confidence in the role.", tone: "support" },
+const getEstimation = (status: string, role: string) => {
+  const estimations: Record<string, any> = {
+    "Above & beyond": {
+      Manager: "Consistently moving technical work forward, closing tasks quickly, and exceeding velocity expectations.",
+      HR: "Demonstrating exceptional cultural fit, highly proactive in team communication, and mentoring peers.",
+      tone: "excellent"
+    },
+    "Well done": {
+      Manager: "Meeting role expectations with steady code delivery and a healthy ramp-up trajectory on core systems.",
+      HR: "Settling into the team well, communicating effectively, and completing all mandatory onboarding milestones.",
+      tone: "good"
+    },
+    "Needs support": {
+      Manager: "Velocity is lower than expected. Recommend reviewing recent blockers in Jira and doing a pair-programming session.",
+      HR: "Would benefit from a focused check-in regarding their well-being and a clear plan to build confidence in their new environment.",
+      tone: "support"
+    },
+  };
+  const est = estimations[status] || estimations["Needs support"];
+  return { copy: est[role], tone: est.tone };
 };
 
 export default function Home() {
@@ -119,7 +135,7 @@ export default function Home() {
     }
   }, [selected?.id]);
 
-  const ai = estimation[selected?.status] || estimation["Needs support"]; 
+  const ai = getEstimation(selected?.status, viewRole);
   const progress = Math.round((90 - (selected?.remaining || 60)) / 90 * 100);
   const notify = (text: string) => { setToast(text); window.setTimeout(() => setToast(""), 2800); };
 
@@ -376,7 +392,13 @@ export default function Home() {
                   </motion.div>
                 )}
               </AnimatePresence>
-            </div></div><div className="signals"><Signal icon="check" color="purple" title={`${selected.tasks.filter(t => t.progress === 100).length + 4} tasks completed`} body="on or ahead of schedule" impact="+12"/><Signal icon="message" color="blue" title="Responsive collaboration" body="Avg. reply time: 1h 14m" impact="+8"/><Signal icon="clipboard" color="orange" title="Growth opportunity" body="Documentation consistency" impact="—"/></div></article></section><section className="section-topline task-heading"><div><span className="eyebrow">CURRENT WORK</span><h3>Assigned tasks</h3></div><button className="text-button" onClick={() => setTab("Tasks")}>View all tasks <Icon name="arrow" size={15}/></button></section><section className="tasks-card">{selected.tasks.map(t => <TaskRow task={t} key={t.title}/>)}</section><section className="section-topline activity-heading"><div><span className="eyebrow">RECENT ACTIVITY</span><h3>Latest updates</h3></div><button className="text-button" onClick={() => setTab("Activity")}>View activity <Icon name="arrow" size={15}/></button></section><section className="activity-card">{selected.activities.slice(0,3).map((a,i) => <ActivityRow activity={a} key={i}/>)}</section></>}
+            </div></div>
+            {viewRole === "Manager" ? (
+              <div className="signals"><Signal icon="check" color="purple" title={`${selected.tasks.filter(t => t.progress === 100).length + 4} technical tasks closed`} body="High velocity on assigned sprint" impact="+12"/><Signal icon="upload" color="blue" title="Consistent code quality" body="Low PR rejection rate" impact="+8"/><Signal icon="clipboard" color="orange" title="Growth opportunity" body="System architecture understanding" impact="—"/></div>
+            ) : (
+              <div className="signals"><Signal icon="check" color="purple" title="Onboarding milestones met" body="Completed all induction sessions" impact="+12"/><Signal icon="message" color="blue" title="Responsive collaboration" body="Highly active in team channels" impact="+8"/><Signal icon="clipboard" color="orange" title="Growth opportunity" body="Cross-departmental networking" impact="—"/></div>
+            )}
+            </article></section><section className="section-topline task-heading"><div><span className="eyebrow">CURRENT WORK</span><h3>Assigned tasks</h3></div><button className="text-button" onClick={() => setTab("Tasks")}>View all tasks <Icon name="arrow" size={15}/></button></section><section className="tasks-card">{selected.tasks.map(t => <TaskRow task={t} key={t.title}/>)}</section><section className="section-topline activity-heading"><div><span className="eyebrow">RECENT ACTIVITY</span><h3>Latest updates</h3></div><button className="text-button" onClick={() => setTab("Activity")}>View activity <Icon name="arrow" size={15}/></button></section><section className="activity-card">{selected.activities.slice(0,3).map((a,i) => <ActivityRow activity={a} key={i}/>)}</section></>}
             
             {tab === "Tasks" && <section className="tasks-card full-card">{selected.tasks.length === 0 ? <div style={{padding:'20px',color:'#777'}}>No tasks yet.</div> : selected.tasks.map(t => <TaskRow task={t} key={t.title}/>)}</section>}
             
@@ -426,14 +448,25 @@ export default function Home() {
                 <span className="eyebrow">AI ESTIMATE LOGIC</span>
                 <h2>How AI Scoring Works</h2>
                 <p>Boardy uses an event-driven architecture to evaluate performance silently without intrusive surveillance.</p>
-                <div style={{background:'#f8fafc', padding:'16px', borderRadius:'8px', marginTop:'16px', fontSize:'13px', lineHeight:'1.6', color:'#334155'}}>
-                  <ul style={{paddingLeft:'16px', display:'flex', flexDirection:'column', gap:'8px'}}>
-                    <li><strong>GitHub Commits & PRs:</strong> High impact on technical scores. (+5 points per event)</li>
-                    <li><strong>Jira Tasks:</strong> Tracks velocity and blocker resolution. (+8 points for completion)</li>
-                    <li><strong>MS 365 Documents:</strong> Indicates planning and documentation effort. (+3 points)</li>
-                    <li><strong>Figma & Slack:</strong> Measures collaboration and responsiveness. (+2 to +4 points)</li>
-                  </ul>
-                </div>
+                {viewRole === "Manager" ? (
+                  <div style={{background:'#f8fafc', padding:'16px', borderRadius:'8px', marginTop:'16px', fontSize:'13px', lineHeight:'1.6', color:'#334155'}}>
+                    <ul style={{paddingLeft:'16px', display:'flex', flexDirection:'column', gap:'8px'}}>
+                      <li><strong>GitHub Commits & PRs:</strong> High impact on technical scores. (+5 points per event)</li>
+                      <li><strong>Jira Tasks:</strong> Tracks velocity and blocker resolution. (+8 points for completion)</li>
+                      <li><strong>Code Reviews:</strong> Measures collaboration and code quality. (+3 points)</li>
+                      <li><strong>Incident Resolution:</strong> Responsiveness to critical issues. (+2 to +4 points)</li>
+                    </ul>
+                  </div>
+                ) : (
+                  <div style={{background:'#f8fafc', padding:'16px', borderRadius:'8px', marginTop:'16px', fontSize:'13px', lineHeight:'1.6', color:'#334155'}}>
+                    <ul style={{paddingLeft:'16px', display:'flex', flexDirection:'column', gap:'8px'}}>
+                      <li><strong>Milestone Completion:</strong> Tracks completion of mandatory 30/60/90 day goals. (+5 points)</li>
+                      <li><strong>Peer Feedback:</strong> Aggregates sentiment from Slack/Teams interactions. (+8 points)</li>
+                      <li><strong>1-on-1 Check-ins:</strong> Consistency and quality of manager check-ins. (+3 points)</li>
+                      <li><strong>Culture & Collaboration:</strong> Participation in team events and discussions. (+2 to +4 points)</li>
+                    </ul>
+                  </div>
+                )}
                 <div className="modal-actions" style={{marginTop:'24px'}}>
                   <button className="primary-button" style={{width:'100%'}} onClick={() => setActiveModal(null)}>Got it</button>
                 </div>
