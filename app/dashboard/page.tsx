@@ -133,6 +133,8 @@ export default function Home() {
   const aiButtonControls = useAnimation();
   
   const [newStaff, setNewStaff] = useState({ name: "", dept: "", role: "", date: "" });
+  const [autoEmail, setAutoEmail] = useState(true);
+  const [emailPreview, setEmailPreview] = useState<{ html: string; to: string; subject: string } | null>(null);
 
   const selected = people.find(p => p.id === selectedId) ?? people[0]; 
   const shown = useMemo(() => {
@@ -330,6 +332,29 @@ export default function Home() {
         const evData = await evRes.json();
         if (evData.success) setDbEvents(evData.events);
         notify(`⚡ Webhook: ${randomEvent.description} (+${data.scoreBoost} points)`);
+        // Event-Driven: Auto Email Report
+        if (autoEmail) {
+          try {
+            const emailRes = await fetch("/api/email", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                to: "huynhminhkhanh.2004@gmail.com",
+                employeeName: selected.name,
+                eventType: randomEvent.eventType,
+                eventDescription: randomEvent.description,
+                score: selected.score,
+                status: selected.status,
+                viewRole
+              })
+            });
+            const emailData = await emailRes.json();
+            if (emailData.success) {
+              setEmailPreview({ html: emailData.html, to: emailData.to, subject: emailData.subject });
+              notify(`📧 Auto-report sent to huynhminhkhanh.2004@gmail.com`);
+            }
+          } catch {}
+        }
       }
     } catch (e) {
       notify("Webhook simulation failed.");
@@ -369,6 +394,15 @@ export default function Home() {
           </div>
           <button className="apple-btn" onClick={handleSimulateWebhook} style={{border:'1px dashed var(--brand-color)',background:'transparent',color:'var(--brand-color)',padding:'8px 12px',fontSize:'12px',cursor:'pointer',display:'flex',gap:'6px',alignItems:'center'}}>
             <Icon name="zap" size={14}/> Simulate Webhook
+          </button>
+          <button onClick={() => { setAutoEmail(!autoEmail); notify(autoEmail ? "Auto-email OFF" : "Auto-email ON"); }} style={{
+            border: '1px solid ' + (autoEmail ? '#10b981' : 'var(--panel-border)'),
+            background: autoEmail ? '#ecfdf5' : 'transparent',
+            color: autoEmail ? '#10b981' : 'var(--muted)',
+            padding: '8px 12px', fontSize: '11px', fontWeight: 600, cursor: 'pointer',
+            display: 'flex', gap: '5px', alignItems: 'center', borderRadius: '14px', transition: 'all 0.2s'
+          }}>
+            <Icon name="mail" size={13}/> {autoEmail ? '📧 Auto' : 'Email Off'}
           </button>
           <button className="apple-btn metallic-bg" onClick={handleGenerateSummary} disabled={isGenerating} style={{border:'0',color:'#fff',padding:'8px 0',fontSize:'12px',cursor:'pointer',width:'135px',textAlign:'center'}}>
             {isGenerating ? "Generating..." : `${viewRole} Summary`}
@@ -618,6 +652,39 @@ export default function Home() {
             <input type="text" value={messageInput} onChange={e => setMessageInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleSendMessage()} disabled={isGenerating} placeholder="Ask about this employee..." />
             <button onClick={handleSendMessage} disabled={isGenerating} className="metallic-bg"><Icon name="arrow" size={16} style={{transform:'rotate(90deg)'}}/></button>
           </div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+
+    {/* Email Preview Modal */}
+    <AnimatePresence>
+      {emailPreview && (
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'grid', placeItems: 'center', zIndex: 300, backdropFilter: 'blur(4px)' }}
+          onClick={() => setEmailPreview(null)}>
+          <motion.div initial={{ opacity: 0, y: 40, scale: 0.95 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 40 }}
+            style={{ width: 'min(640px, 90vw)', maxHeight: '85vh', background: '#fff', borderRadius: '16px', overflow: 'hidden', boxShadow: '0 25px 60px rgba(0,0,0,0.3)', display: 'flex', flexDirection: 'column' }}
+            onClick={e => e.stopPropagation()}>
+            <div style={{ padding: '16px 20px', background: '#f9fafb', borderBottom: '1px solid #e5e7eb', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <div style={{ fontSize: '14px', fontWeight: 700, color: '#111', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  📧 Auto Email Report
+                  <span style={{ fontSize: '10px', fontWeight: 600, color: '#10b981', background: '#ecfdf5', padding: '2px 8px', borderRadius: '6px' }}>SENT</span>
+                </div>
+                <div style={{ fontSize: '11px', color: '#6b7280', marginTop: '4px' }}>
+                  To: <strong>{emailPreview.to}</strong> · {emailPreview.subject}
+                </div>
+              </div>
+              <button onClick={() => setEmailPreview(null)} style={{ border: 'none', background: 'transparent', fontSize: '20px', color: '#9ca3af', cursor: 'pointer' }}>✕</button>
+            </div>
+            <div style={{ flex: 1, overflow: 'auto' }}>
+              <iframe srcDoc={emailPreview.html} style={{ width: '100%', height: '500px', border: 'none' }} title="Email Preview" />
+            </div>
+            <div style={{ padding: '12px 20px', background: '#f9fafb', borderTop: '1px solid #e5e7eb', display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+              <span style={{ fontSize: '11px', color: '#9ca3af', flex: 1, display: 'flex', alignItems: 'center' }}>Event-Driven Architecture · Triggered by Webhook</span>
+              <button onClick={() => setEmailPreview(null)} style={{ padding: '8px 20px', borderRadius: '8px', border: 'none', background: '#111', color: '#fff', fontSize: '12px', fontWeight: 600, cursor: 'pointer' }}>Close</button>
+            </div>
+          </motion.div>
         </motion.div>
       )}
     </AnimatePresence>
