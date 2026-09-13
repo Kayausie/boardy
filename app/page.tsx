@@ -177,7 +177,7 @@ export default function LandingPage() {
 
       {/* Footer */}
       <footer style={{ borderTop: "1px solid rgba(255,255,255,0.06)", padding: "32px 40px", display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 12, color: "#475569" }}>
-        <span>© 2024 Boardy · Built for AI in Business Hackathon</span>
+        <span>© 2026 Boardy · Built for AI in Business Hackathon</span>
         <span>Powered by Google Gemini · Next.js · SQLite</span>
       </footer>
     </div>

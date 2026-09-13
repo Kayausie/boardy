@@ -48,11 +48,11 @@ const now = new Date().toISOString();
 const h = (hoursAgo: number) => new Date(Date.now() - hoursAgo * 3600000).toISOString();
 
 // Users
-const u1 = insertUser.run("Maya Chen", "MC", "Product Designer", "Product", "12 Aug 2024", 24, 89, "Above & beyond", "#d9e9ff");
-const u2 = insertUser.run("Daniel Ross", "DR", "Frontend Engineer", "Engineering", "19 Aug 2024", 31, 76, "Well done", "#ffe6c7");
-const u3 = insertUser.run("Priya Shah", "PS", "People Operations", "People", "26 Aug 2024", 38, 71, "Well done", "#e9dcff");
-const u4 = insertUser.run("Marcus Lee", "ML", "Account Executive", "Sales", "02 Sep 2024", 45, 58, "Needs support", "#d5f0df");
-const u5 = insertUser.run("Sofia Nguyen", "SN", "Marketing Associate", "Marketing", "09 Sep 2024", 52, 83, "Above & beyond", "#ffe1eb");
+const u1 = insertUser.run("Maya Chen", "MC", "Product Designer", "Product", "12 Aug 2026", 24, 89, "Above & beyond", "#d9e9ff");
+const u2 = insertUser.run("Daniel Ross", "DR", "Frontend Engineer", "Engineering", "19 Aug 2026", 31, 76, "Well done", "#ffe6c7");
+const u3 = insertUser.run("Priya Shah", "PS", "People Operations", "People", "26 Aug 2026", 38, 71, "Well done", "#e9dcff");
+const u4 = insertUser.run("Marcus Lee", "ML", "Account Executive", "Sales", "02 Sep 2026", 45, 58, "Needs support", "#d5f0df");
+const u5 = insertUser.run("Sofia Nguyen", "SN", "Marketing Associate", "Marketing", "09 Sep 2026", 52, 83, "Above & beyond", "#ffe1eb");
 
 // Maya events
 insertEvent.run(u1.lastInsertRowid, "ms365_document", "Uploaded 3 research synthesis files", JSON.stringify({source:"OneDrive",files:3}), h(2));
