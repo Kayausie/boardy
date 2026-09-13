@@ -68,7 +68,7 @@ Current Status: ${user.status}`;
     systemPrompt += `\n\nUse ALL the above data to answer the user's questions accurately. If they ask about activity, tasks, or progress, reference the specific event logs.`;
 
     const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: "gemini-3.7-flash" });
+    const model = genAI.getGenerativeModel({ model: "gemini-3.5-flash" });
 
     // Build chat history for Gemini (skip the first initial assistant greeting to prevent model-model role collision)
     const historyMessages = messages.length > 0 && messages[0].content.startsWith("Hi, I'm your AI")
