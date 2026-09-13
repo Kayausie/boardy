@@ -63,7 +63,7 @@ export default function Home() {
 
   // Fetch users from DB on mount
   useEffect(() => {
-    fetch("/api/users").then(r => r.json()).then(data => {
+    const loadUsers = () => fetch("/api/users").then(r => r.json()).then(data => {
       if (data.success && data.users.length > 0) {
         setPeople(data.users.map((u: any) => ({
           id: u.id, name: u.name, initials: u.initials, role: u.role,
@@ -73,6 +73,9 @@ export default function Home() {
         })));
       }
     }).catch(() => {});
+    loadUsers();
+    const interval = window.setInterval(loadUsers, 15000);
+    return () => window.clearInterval(interval);
   }, []);
 
   const [selectedId, setSelectedId] = useState(1); 
@@ -104,10 +107,14 @@ export default function Home() {
   
   // Fetch events when selected user changes
   useEffect(() => {
-    if (selected?.id) {
-      fetch(`/api/users/${selected.id}/events`).then(r => r.json()).then(data => {
+    const userId = selected?.id;
+    if (userId) {
+      const loadEvents = () => fetch(`/api/users/${userId}/events`).then(r => r.json()).then(data => {
         if (data.success) setDbEvents(data.events);
       }).catch(() => {});
+      loadEvents();
+      const interval = window.setInterval(loadEvents, 15000);
+      return () => window.clearInterval(interval);
     }
   }, [selected?.id]);
 
@@ -319,22 +326,7 @@ export default function Home() {
       
       <div className="content-wrap">
         <motion.div key={selected.id} initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
-          <section className="profile-header">
-            <div className="profile-title"><img src={`https://api.dicebear.com/7.x/notionists/svg?seed=${selected.name}`} className="large-avatar" style={{backgroundColor:selected.color}} alt={selected.name} /><div><div className="title-row"><h2>{selected.name}</h2><span className={`status-pill ${ai.tone}`}>{selected.status}</span></div><p>{selected.role} <span>·</span> {selected.department}</p></div></div>
-            <div style={{position:'relative'}}>
-              <button className="more-button" onClick={() => setShowProfileMenu(!showProfileMenu)}><Icon name="dots" size={20}/></button>
-              <AnimatePresence>
-                {showProfileMenu && (
-                  <motion.div initial={{opacity:0, scale:0.95}} animate={{opacity:1, scale:1}} exit={{opacity:0, scale:0.95}} className="dropdown-menu" style={{position:'absolute', top:'100%', right:0, marginTop:'4px', background:'#fff', border:'1px solid #e2e8f0', borderRadius:'8px', minWidth:'160px', boxShadow:'0 4px 12px rgba(0,0,0,0.1)', zIndex:100, padding:'4px', display:'flex', flexDirection:'column'}}>
-                    <button style={{padding:'8px 12px', textAlign:'left', fontSize:'13px', background:'transparent', border:'0', cursor:'pointer', borderRadius:'4px'}} onClick={() => {notify("Edit profile action"); setShowProfileMenu(false);}}>Edit Profile</button>
-                    <button style={{padding:'8px 12px', textAlign:'left', fontSize:'13px', background:'transparent', border:'0', cursor:'pointer', borderRadius:'4px'}} onClick={() => {notify("Assign new task"); setShowProfileMenu(false);}}>Assign Task</button>
-                    <div style={{height:'1px', background:'#e2e8f0', margin:'4px 0'}}/>
-                    <button style={{padding:'8px 12px', textAlign:'left', fontSize:'13px', background:'transparent', border:'0', cursor:'pointer', borderRadius:'4px', color:'#ef4444'}} onClick={() => {notify("Suspended user"); setShowProfileMenu(false);}}>Suspend User</button>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-          </section>
+          <section className="profile-header"><div className="profile-title"><span className="large-avatar" style={{backgroundColor:selected.color}}>{selected.initials}</span><div><div className="title-row"><h2>{selected.name}</h2><span className={`status-pill ${ai.tone}`}>{selected.status}</span></div><p>{selected.role} <span>·</span> {selected.department} <span style={{marginLeft:8, color:'#6259cc', fontWeight:700}}>Zapier ID: {selected.id}</span></p></div></div><button className="more-button" onClick={() => notify("Review actions are ready to be configured.")}><Icon name="dots" size={20}/></button></section>
           <section className="probation-banner"><div className="calendar-icon"><Icon name="calendar" size={18}/></div><div className="probation-copy"><span>PROBATION PERIOD</span><strong>{selected.remaining} days remaining</strong><small>Started {selected.start} · Review due 10 Oct 2024</small></div><div className="progress-summary"><div><span>Progress</span><strong>{progress}%</strong></div><div className="progress-track"><motion.i initial={{width:0}} animate={{width:`${progress}%`}} transition={{duration:0.8}}/></div></div></section>
         </motion.div>
 
@@ -361,11 +353,7 @@ export default function Home() {
             
             {tab === "Tasks" && <section className="tasks-card full-card">{selected.tasks.length === 0 ? <div style={{padding:'20px',color:'#777'}}>No tasks yet.</div> : selected.tasks.map(t => <TaskRow task={t} key={t.title}/>)}</section>}
             
-            {tab === "Activity" && <section className="activity-card full-card">{dbEvents.length === 0 ? <div style={{padding:'20px',color:'#777'}}>No events recorded yet.</div> : dbEvents.map((ev: any, i: number) => {
-              const iconMap: Record<string,string> = {github_commit:"upload",github_issue:"message",jira_task:"check",ms365_document:"upload",ms365_email:"mail",figma_comment:"message",slack_message:"message"};
-              const typeMap: Record<string,string> = {github_commit:"upload",github_issue:"comment",jira_task:"task",ms365_document:"upload",ms365_email:"mail",figma_comment:"comment",slack_message:"comment"};
-              return <div className="activity-row" key={i}><span className={`activity-icon ${typeMap[ev.event_type] || 'task'}`}><Icon name={iconMap[ev.event_type] || "check"} size={16}/></span><div><strong>{ev.description}</strong><small>{ev.event_type.replace(/_/g, " ").toUpperCase()}</small></div><time>{new Date(ev.timestamp).toLocaleString()}</time></div>;
-            })}</section>}
+            {tab === "Activity" && <section className="activity-card full-card">{dbEvents.length === 0 ? <div style={{padding:'20px',color:'#777'}}>No events recorded yet.</div> : dbEvents.map((ev: any) => <DbActivityRow event={ev} key={ev.id}/>)}</section>}
             
             {tab === "AI Buddy" && (
               <section className="tasks-card full-card" style={{padding:'20px', display:'flex', flexDirection:'column', gap:'16px', minHeight:'400px'}}>
@@ -494,6 +482,7 @@ export default function Home() {
   </main>;
 }
 
-export function Signal({icon,color,title,body,impact}:{icon:string;color:string;title:string;body:string;impact:string}) { return <div><span className={`signal-icon ${color}`}><Icon name={icon} size={16}/></span><p><strong>{title}</strong><small>{body}</small></p><b className={impact === "—" ? "neutral" : "positive"}>{impact}</b></div>; }
-export function TaskRow({task}:{task:Task}) { return <div className="task-row"><div className="task-main"><span className={`task-check ${task.progress===100?"done":""}`}>{task.progress===100&&<Icon name="check" size={13}/>}</span><div><strong>{task.title}</strong><small>{task.detail}</small></div></div><div className="task-progress"><div className="mini-bar"><i style={{width:`${task.progress}%`}}/></div><span>{task.progress}%</span></div><div className={`task-status ${task.progress===100?"complete":""}`}>{task.status}</div><small className="due">{task.due}</small><button className="more-button"><Icon name="dots" size={17}/></button></div>; }
-export function ActivityRow({activity}:{activity:Activity}) { const icons={mail:"mail",upload:"upload",task:"check",comment:"message"}; return <div className="activity-row"><span className={`activity-icon ${activity.type}`}><Icon name={icons[activity.type]} size={16}/></span><div><strong>{activity.text}</strong><small>{activity.meta}</small></div><time>{activity.time}</time></div>; }
+function Signal({icon,color,title,body,impact}:{icon:string;color:string;title:string;body:string;impact:string}) { return <div><span className={`signal-icon ${color}`}><Icon name={icon} size={16}/></span><p><strong>{title}</strong><small>{body}</small></p><b className={impact === "—" ? "neutral" : "positive"}>{impact}</b></div>; }
+function TaskRow({task}:{task:Task}) { return <div className="task-row"><div className="task-main"><span className={`task-check ${task.progress===100?"done":""}`}>{task.progress===100&&<Icon name="check" size={13}/>}</span><div><strong>{task.title}</strong><small>{task.detail}</small></div></div><div className="task-progress"><div className="mini-bar"><i style={{width:`${task.progress}%`}}/></div><span>{task.progress}%</span></div><div className={`task-status ${task.progress===100?"complete":""}`}>{task.status}</div><small className="due">{task.due}</small><button className="more-button"><Icon name="dots" size={17}/></button></div>; }
+function ActivityRow({activity}:{activity:Activity}) { const icons={mail:"mail",upload:"upload",task:"check",comment:"message"}; return <div className="activity-row"><span className={`activity-icon ${activity.type}`}><Icon name={icons[activity.type]} size={16}/></span><div><strong>{activity.text}</strong><small>{activity.meta}</small></div><time>{activity.time}</time></div>; }
+function DbActivityRow({event}:{event:any}) { const iconMap: Record<string,string> = {github_commit:"upload",github_issue:"message",jira_task:"check",ms365_document:"upload",ms365_email:"mail",figma_comment:"message",slack_message:"message",file_uploaded:"upload",file_updated:"upload",task_completed:"check"}; const typeMap: Record<string,string> = {github_commit:"upload",github_issue:"comment",jira_task:"task",ms365_document:"upload",ms365_email:"mail",figma_comment:"comment",slack_message:"comment",file_uploaded:"upload",file_updated:"upload",task_completed:"task"}; return <div className="activity-row"><span className={`activity-icon ${typeMap[event.event_type] || 'task'}`}><Icon name={iconMap[event.event_type] || "check"} size={16}/></span><div><strong>{event.description}</strong><small>{`${event.source || "manual"} · ${event.event_type.replace(/_/g, " ")}`.toUpperCase()}</small></div><time>{new Date(event.timestamp).toLocaleString()}</time></div>; }
