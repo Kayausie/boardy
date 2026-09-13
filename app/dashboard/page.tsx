@@ -198,7 +198,7 @@ export default function Home() {
         aiText += decoder.decode(value, { stream: true });
         setChatMessages(prev => {
           const updated = [...prev];
-          updated[updated.length - 1].content = aiText;
+          updated[updated.length - 1] = { ...updated[updated.length - 1], content: aiText };
           return updated;
         });
       }
@@ -241,7 +241,7 @@ export default function Home() {
         aiText += decoder.decode(value, { stream: true });
         setChatMessages(prev => {
           const updated = [...prev];
-          updated[updated.length - 1].content = aiText;
+          updated[updated.length - 1] = { ...updated[updated.length - 1], content: aiText };
           return updated;
         });
       }
