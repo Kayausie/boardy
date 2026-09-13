@@ -12,7 +12,7 @@ type Task = { title: string; detail: string; progress: number; status: string; d
 type Person = { id: number; name: string; initials: string; role: string; department: string; start: string; remaining: number; score: number; status: "Above & beyond" | "Well done" | "Needs support"; color: string; tasks: Task[]; activities: Activity[] };
 
 const initialPeople: Person[] = [
-  { id: 1, name: "Maya Chen", initials: "MC", role: "Product Designer", department: "Product", start: "12 Aug 2024", remaining: 24, score: 89, status: "Above & beyond", color: "#d9e9ff", tasks: [
+  { id: 1, name: "Maya Chen", initials: "MC", role: "Product Designer", department: "Product", start: "12 Aug 2026", remaining: 24, score: 89, status: "Above & beyond", color: "#d9e9ff", tasks: [
     { title: "Redesign the onboarding flow", detail: "Design · Core product", progress: 82, status: "In progress", due: "Due Sep 20" },
     { title: "Run usability test synthesis", detail: "Research · Growth", progress: 100, status: "Complete", due: "Completed Sep 8" },
     { title: "Document component handoff", detail: "Design systems", progress: 45, status: "In progress", due: "Due Sep 24" },
@@ -22,7 +22,7 @@ const initialPeople: Person[] = [
     { type: "comment", text: "Left feedback on the onboarding prototype", meta: "Figma · 4 comments", time: "Yesterday, 4:48 PM" },
     { type: "task", text: "Moved “Usability test synthesis” to complete", meta: "Task activity", time: "Yesterday, 3:05 PM" },
   ] },
-  { id: 2, name: "Daniel Ross", initials: "DR", role: "Frontend Engineer", department: "Engineering", start: "19 Aug 2024", remaining: 31, score: 76, status: "Well done", color: "#ffe6c7", tasks: [
+  { id: 2, name: "Daniel Ross", initials: "DR", role: "Frontend Engineer", department: "Engineering", start: "19 Aug 2026", remaining: 31, score: 76, status: "Well done", color: "#ffe6c7", tasks: [
     { title: "Build billing settings screen", detail: "Frontend · Billing", progress: 70, status: "In progress", due: "Due Sep 22" },
     { title: "Resolve mobile navigation bugs", detail: "Frontend · Core product", progress: 100, status: "Complete", due: "Completed Sep 7" },
     { title: "Write component test coverage", detail: "Engineering quality", progress: 35, status: "In progress", due: "Due Sep 28" },
@@ -31,9 +31,9 @@ const initialPeople: Person[] = [
     { type: "mail", text: "Replied to implementation feedback", meta: "Subject: Billing settings review", time: "Yesterday, 5:20 PM" },
     { type: "comment", text: "Commented on a customer-reported issue", meta: "Issue #1194", time: "Yesterday, 2:15 PM" },
   ] },
-  { id: 3, name: "Priya Shah", initials: "PS", role: "People Operations", department: "People", start: "26 Aug 2024", remaining: 38, score: 71, status: "Well done", color: "#e9dcff", tasks: [{ title: "Refresh new starter checklist", detail: "People operations", progress: 90, status: "In progress", due: "Due Sep 17" }, { title: "Audit leave policy pages", detail: "Knowledge base", progress: 100, status: "Complete", due: "Completed Sep 6" }], activities: [{ type: "upload", text: "Uploaded a revised onboarding checklist", meta: "People hub · Version 3", time: "Today, 8:42 AM" }, { type: "mail", text: "Sent welcome information to new starters", meta: "6 recipients", time: "Yesterday, 10:16 AM" }] },
-  { id: 4, name: "Marcus Lee", initials: "ML", role: "Account Executive", department: "Sales", start: "02 Sep 2024", remaining: 45, score: 58, status: "Needs support", color: "#d5f0df", tasks: [{ title: "Complete CRM discovery notes", detail: "Sales · Pipeline", progress: 45, status: "In progress", due: "Due Sep 16" }, { title: "Deliver product knowledge assessment", detail: "Training", progress: 20, status: "In progress", due: "Due Sep 19" }], activities: [{ type: "mail", text: "Opened sales enablement resources", meta: "Training series · 3 documents", time: "Yesterday, 1:24 PM" }, { type: "comment", text: "Asked a question in the onboarding channel", meta: "#sales-onboarding", time: "Monday, 3:02 PM" }] },
-  { id: 5, name: "Sofia Nguyen", initials: "SN", role: "Marketing Associate", department: "Marketing", start: "09 Sep 2024", remaining: 52, score: 83, status: "Above & beyond", color: "#ffe1eb", tasks: [{ title: "Prepare Q4 campaign brief", detail: "Marketing · Campaigns", progress: 68, status: "In progress", due: "Due Sep 26" }, { title: "Compile social performance report", detail: "Marketing · Reporting", progress: 100, status: "Complete", due: "Completed Sep 9" }], activities: [{ type: "upload", text: "Uploaded the August social report", meta: "Growth drive", time: "Today, 9:02 AM" }, { type: "task", text: "Completed social performance report", meta: "2 days ahead of schedule", time: "Yesterday, 4:34 PM" }] },
+  { id: 3, name: "Priya Shah", initials: "PS", role: "People Operations", department: "People", start: "26 Aug 2026", remaining: 38, score: 71, status: "Well done", color: "#e9dcff", tasks: [{ title: "Refresh new starter checklist", detail: "People operations", progress: 90, status: "In progress", due: "Due Sep 17" }, { title: "Audit leave policy pages", detail: "Knowledge base", progress: 100, status: "Complete", due: "Completed Sep 6" }], activities: [{ type: "upload", text: "Uploaded a revised onboarding checklist", meta: "People hub · Version 3", time: "Today, 8:42 AM" }, { type: "mail", text: "Sent welcome information to new starters", meta: "6 recipients", time: "Yesterday, 10:16 AM" }] },
+  { id: 4, name: "Marcus Lee", initials: "ML", role: "Account Executive", department: "Sales", start: "02 Sep 2026", remaining: 45, score: 58, status: "Needs support", color: "#d5f0df", tasks: [{ title: "Complete CRM discovery notes", detail: "Sales · Pipeline", progress: 45, status: "In progress", due: "Due Sep 16" }, { title: "Deliver product knowledge assessment", detail: "Training", progress: 20, status: "In progress", due: "Due Sep 19" }], activities: [{ type: "mail", text: "Opened sales enablement resources", meta: "Training series · 3 documents", time: "Yesterday, 1:24 PM" }, { type: "comment", text: "Asked a question in the onboarding channel", meta: "#sales-onboarding", time: "Monday, 3:02 PM" }] },
+  { id: 5, name: "Sofia Nguyen", initials: "SN", role: "Marketing Associate", department: "Marketing", start: "09 Sep 2026", remaining: 52, score: 83, status: "Above & beyond", color: "#ffe1eb", tasks: [{ title: "Prepare Q4 campaign brief", detail: "Marketing · Campaigns", progress: 68, status: "In progress", due: "Due Sep 26" }, { title: "Compile social performance report", detail: "Marketing · Reporting", progress: 100, status: "Complete", due: "Completed Sep 9" }], activities: [{ type: "upload", text: "Uploaded the August social report", meta: "Growth drive", time: "Today, 9:02 AM" }, { type: "task", text: "Completed social performance report", meta: "2 days ahead of schedule", time: "Yesterday, 4:34 PM" }] },
 ];
 
 const iconPaths: Record<string, React.ReactNode> = {
@@ -326,8 +326,34 @@ export default function Home() {
       
       <div className="content-wrap">
         <motion.div key={selected.id} initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
-          <section className="profile-header"><div className="profile-title"><span className="large-avatar" style={{backgroundColor:selected.color}}>{selected.initials}</span><div><div className="title-row"><h2>{selected.name}</h2><span className={`status-pill ${ai.tone}`}>{selected.status}</span></div><p>{selected.role} <span>·</span> {selected.department} <span style={{marginLeft:8, color:'#6259cc', fontWeight:700}}>Zapier ID: {selected.id}</span></p></div></div><button className="more-button" onClick={() => notify("Review actions are ready to be configured.")}><Icon name="dots" size={20}/></button></section>
-          <section className="probation-banner"><div className="calendar-icon"><Icon name="calendar" size={18}/></div><div className="probation-copy"><span>PROBATION PERIOD</span><strong>{selected.remaining} days remaining</strong><small>Started {selected.start} · Review due 10 Oct 2024</small></div><div className="progress-summary"><div><span>Progress</span><strong>{progress}%</strong></div><div className="progress-track"><motion.i initial={{width:0}} animate={{width:`${progress}%`}} transition={{duration:0.8}}/></div></div></section>
+          <section className="profile-header">
+            <div className="profile-title">
+              <span className="large-avatar" style={{backgroundColor:selected.color}}>
+                <img src={`https://api.dicebear.com/7.x/notionists/svg?seed=${selected.name.replace(/\s+/g, '')}&backgroundColor=${selected.color.replace('#','')}`} alt={selected.name} style={{width:'100%', height:'100%', borderRadius:'50%'}}/>
+              </span>
+              <div>
+                <div className="title-row">
+                  <h2>{selected.name}</h2>
+                  <span className={`status-pill ${ai.tone}`}>{selected.status}</span>
+                </div>
+                <p>{selected.role} <span>·</span> {selected.department} <span style={{marginLeft:8, color:'#6259cc', fontWeight:700}}>Zapier ID: {selected.id}</span></p>
+              </div>
+            </div>
+            <div style={{position:'relative'}}>
+              <button className="more-button" onClick={() => setShowProfileMenu(!showProfileMenu)}><Icon name="dots" size={20}/></button>
+              <AnimatePresence>
+                {showProfileMenu && (
+                  <motion.div initial={{opacity:0, scale:0.95}} animate={{opacity:1, scale:1}} exit={{opacity:0, scale:0.95}} className="dropdown-menu" style={{position:'absolute', top:'100%', right:0, marginTop:'4px', background:'#fff', border:'1px solid #e2e8f0', borderRadius:'8px', minWidth:'180px', boxShadow:'0 4px 12px rgba(0,0,0,0.1)', zIndex:100, padding:'4px', display:'flex', flexDirection:'column'}}>
+                    <button style={{padding:'8px 12px', textAlign:'left', fontSize:'13px', background:'transparent', border:'0', cursor:'pointer', borderRadius:'4px'}} onClick={() => {notify("Edit profile action"); setShowProfileMenu(false);}}>Edit Profile</button>
+                    <button style={{padding:'8px 12px', textAlign:'left', fontSize:'13px', background:'transparent', border:'0', cursor:'pointer', borderRadius:'4px'}} onClick={() => {notify("Assign new task"); setShowProfileMenu(false);}}>Assign Task</button>
+                    <div style={{height:'1px', background:'#e2e8f0', margin:'4px 0'}}/>
+                    <button style={{padding:'8px 12px', textAlign:'left', fontSize:'13px', background:'transparent', border:'0', cursor:'pointer', borderRadius:'4px', color:'#ef4444'}} onClick={() => {notify("Suspended user"); setShowProfileMenu(false);}}>Suspend User</button>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          </section>
+          <section className="probation-banner"><div className="calendar-icon"><Icon name="calendar" size={18}/></div><div className="probation-copy"><span>PROBATION PERIOD</span><strong>{selected.remaining} days remaining</strong><small>Started {selected.start} · Review due 10 Oct 2026</small></div><div className="progress-summary"><div><span>Progress</span><strong>{progress}%</strong></div><div className="progress-track"><motion.i initial={{width:0}} animate={{width:`${progress}%`}} transition={{duration:0.8}}/></div></div></section>
         </motion.div>
 
         <div className="tabs" role="tablist">

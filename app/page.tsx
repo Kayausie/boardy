@@ -4,38 +4,56 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
 
-const fadeUp = { hidden: { opacity: 0, y: 30 }, show: { opacity: 1, y: 0, transition: { duration: 0.6 } } };
-const stagger = { show: { transition: { staggerChildren: 0.15 } } };
+
+const fadeUp: any = { hidden: { opacity: 0, y: 40 }, show: { opacity: 1, y: 0, transition: { duration: 0.8, ease: [0.16, 1, 0.3, 1] } } };
+const stagger: any = { show: { transition: { staggerChildren: 0.1 } } };
 
 export default function LandingPage() {
   const [scrolled, setScrolled] = useState(false);
+  
   useEffect(() => {
+    // Automatically clean messy tracking parameters from the URL
+    if (typeof window !== 'undefined' && window.location.search) {
+      const url = new URL(window.location.href);
+      const paramsToRemove = ['fbclid', 'utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content'];
+      let changed = false;
+      paramsToRemove.forEach(param => {
+        if (url.searchParams.has(param)) {
+          url.searchParams.delete(param);
+          changed = true;
+        }
+      });
+      if (changed) {
+        window.history.replaceState({}, document.title, url.pathname + url.search);
+      }
+    }
+
     const handler = () => setScrolled(window.scrollY > 40);
     window.addEventListener("scroll", handler);
     return () => window.removeEventListener("scroll", handler);
   }, []);
 
   return (
-    <div style={{ background: "#0a0a1a", color: "#e2e8f0", minHeight: "100vh", fontFamily: "'Inter', system-ui, sans-serif" }}>
+    <div style={{ background: "var(--bg-canvas)", color: "var(--ink)", minHeight: "100vh" }}>
       {/* Nav */}
-      <nav style={{
+      <nav className={scrolled ? "apple-glass" : ""} style={{
         position: "fixed", top: 0, left: 0, right: 0, zIndex: 50,
         padding: "16px 40px", display: "flex", alignItems: "center", justifyContent: "space-between",
-        background: scrolled ? "rgba(10,10,26,0.85)" : "transparent",
-        backdropFilter: scrolled ? "blur(12px)" : "none",
-        borderBottom: scrolled ? "1px solid rgba(255,255,255,0.06)" : "none",
+        borderBottom: scrolled ? "1px solid var(--border-color)" : "1px solid transparent",
         transition: "all 0.3s ease",
       }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <div style={{ width: 32, height: 32, borderRadius: 10, background: "linear-gradient(135deg,#a68a6b,#8c7355)", display: "grid", placeItems: "center", color: "#fff", fontWeight: 800, fontSize: 16 }}>B</div>
-          <span style={{ fontWeight: 700, fontSize: 18, letterSpacing: -0.5 }}>Boardy</span>
+          <div style={{ width: 34, height: 34, borderRadius: 10, background: "var(--brand-color)", display: "grid", placeItems: "center", color: "#fff", fontWeight: 800, fontSize: 16 }}>
+            ✨
+          </div>
+          <span style={{ fontWeight: 800, fontSize: 20, letterSpacing: -0.5 }}>Boardy</span>
         </div>
-        <div style={{ display: "flex", gap: 28, alignItems: "center", fontSize: 13 }}>
-          <a href="#how" style={{ color: "#94a3b8", textDecoration: "none" }}>How It Works</a>
-          <a href="#features" style={{ color: "#94a3b8", textDecoration: "none" }}>Features</a>
-          <a href="#why" style={{ color: "#94a3b8", textDecoration: "none" }}>Why Boardy</a>
-          <Link href="/dashboard" style={{ background: "linear-gradient(135deg,#a68a6b,#8c7355)", color: "#fff", padding: "8px 20px", borderRadius: 8, textDecoration: "none", fontWeight: 600, fontSize: 13 }}>
-            Open Dashboard →
+        <div style={{ display: "flex", gap: 32, alignItems: "center", fontSize: 14, fontWeight: 600 }}>
+          <a href="#how" style={{ color: "var(--ink-light)", textDecoration: "none", transition: "color 0.2s" }} onMouseOver={(e) => e.currentTarget.style.color = "var(--ink)"} onMouseOut={(e) => e.currentTarget.style.color = "var(--ink-light)"}>How It Works</a>
+          <a href="#features" style={{ color: "var(--ink-light)", textDecoration: "none", transition: "color 0.2s" }} onMouseOver={(e) => e.currentTarget.style.color = "var(--ink)"} onMouseOut={(e) => e.currentTarget.style.color = "var(--ink-light)"}>Features</a>
+          <a href="#why" style={{ color: "var(--ink-light)", textDecoration: "none", transition: "color 0.2s" }} onMouseOver={(e) => e.currentTarget.style.color = "var(--ink)"} onMouseOut={(e) => e.currentTarget.style.color = "var(--ink-light)"}>Why Boardy</a>
+          <Link href="/dashboard" className="pill-btn" style={{ background: "var(--ink)", color: "var(--bg-canvas)", padding: "8px 20px", textDecoration: "none", fontSize: 14, fontWeight: 600 }}>
+            Open Dashboard
           </Link>
         </div>
       </nav>
@@ -43,111 +61,96 @@ export default function LandingPage() {
       {/* Hero */}
       <motion.section initial="hidden" animate="show" variants={stagger} style={{
         minHeight: "100vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
-        textAlign: "center", padding: "120px 24px 80px", position: "relative", overflow: "hidden",
+        textAlign: "center", padding: "120px 24px 80px", position: "relative",
       }}>
-        {/* Gradient Orbs */}
-        <div style={{ position: "absolute", width: 600, height: 600, borderRadius: "50%", background: "radial-gradient(circle, rgba(140,115,85,0.15) 0%, transparent 70%)", top: -100, left: -200 }} />
-        <div style={{ position: "absolute", width: 500, height: 500, borderRadius: "50%", background: "radial-gradient(circle, rgba(166,138,107,0.1) 0%, transparent 70%)", bottom: -100, right: -150 }} />
-
-        <motion.div variants={fadeUp} style={{ background: "rgba(140,115,85,0.15)", border: "1px solid rgba(140,115,85,0.3)", borderRadius: 99, padding: "6px 16px", fontSize: 12, fontWeight: 600, color: "#a8a0ff", marginBottom: 24, display: "inline-flex", gap: 6, alignItems: "center" }}>
+        
+        <motion.div variants={fadeUp} style={{ background: "var(--brand-color-light)", borderRadius: 980, padding: "8px 20px", fontSize: 13, fontWeight: 600, color: "var(--brand-color)", marginBottom: 24, display: "inline-flex", gap: 8, alignItems: "center" }}>
           ⚡ Event-Driven AI Onboarding Copilot
         </motion.div>
 
-        <motion.h1 variants={fadeUp} style={{ fontSize: "clamp(36px, 5vw, 64px)", fontWeight: 800, letterSpacing: -2, lineHeight: 1.1, maxWidth: 800, margin: "0 0 20px" }}>
+        <motion.h1 variants={fadeUp} style={{ fontSize: "clamp(46px, 8vw, 96px)", fontWeight: 700, letterSpacing: "-0.04em", lineHeight: 1.05, maxWidth: 1000, margin: "0 0 24px" }}>
           Stop guessing how your <br />
-          <span style={{ background: "linear-gradient(135deg,#a68a6b,#c4a484)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>new hires</span> are doing.
+          <span style={{ color: "var(--brand-color)" }}>new hires</span> are doing.
         </motion.h1>
 
-        <motion.p variants={fadeUp} style={{ fontSize: 17, color: "#94a3b8", maxWidth: 560, lineHeight: 1.7, margin: "0 0 36px" }}>
+        <motion.p variants={fadeUp} style={{ fontSize: 21, color: "var(--ink-light)", maxWidth: 640, lineHeight: 1.5, margin: "0 0 48px", fontWeight: 500, letterSpacing: "-0.01em" }}>
           Boardy silently collects metadata from GitHub, Jira & MS 365 — then uses AI to generate role-specific reports for HR and Managers. No screen recording. No surveillance. Just smart onboarding.
         </motion.p>
 
-        <motion.div variants={fadeUp} style={{ display: "flex", gap: 14 }}>
-          <Link href="/dashboard" style={{ background: "linear-gradient(135deg,#a68a6b,#8c7355)", color: "#fff", padding: "14px 32px", borderRadius: 12, textDecoration: "none", fontWeight: 700, fontSize: 15, boxShadow: "0 8px 30px rgba(140,115,85,0.4)" }}>
-            Try the Live Demo →
+        <motion.div variants={fadeUp} style={{ display: "flex", gap: 16 }}>
+          <Link href="/dashboard" className="pill-btn" style={{ background: "var(--brand-color)", color: "#fff", padding: "18px 40px", textDecoration: "none", fontWeight: 600, fontSize: 17 }}>
+            Try the Live Demo
           </Link>
-          <a href="#how" style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", color: "#e2e8f0", padding: "14px 28px", borderRadius: 12, textDecoration: "none", fontWeight: 600, fontSize: 15 }}>
-            See How It Works
+          <a href="#how" className="pill-btn" style={{ background: "transparent", color: "var(--brand-color)", padding: "18px 40px", textDecoration: "none", fontWeight: 600, fontSize: 17 }}>
+            See How It Works ↗
           </a>
         </motion.div>
       </motion.section>
 
-      {/* How It Works */}
-      <section id="how" style={{ padding: "100px 24px", maxWidth: 1100, margin: "0 auto" }}>
-        <motion.div initial="hidden" whileInView="show" viewport={{ once: true }} variants={stagger} style={{ textAlign: "center", marginBottom: 60 }}>
-          <motion.span variants={fadeUp} style={{ color: "#a68a6b", fontSize: 12, fontWeight: 700, letterSpacing: 2 }}>THE 5-STEP WORKFLOW</motion.span>
-          <motion.h2 variants={fadeUp} style={{ fontSize: 40, fontWeight: 800, letterSpacing: -1, margin: "12px 0 16px" }}>How Boardy Works</motion.h2>
-          <motion.p variants={fadeUp} style={{ color: "#94a3b8", fontSize: 15, maxWidth: 500, margin: "0 auto" }}>From data collection to AI-powered insight — fully automated, completely private.</motion.p>
+      {/* How It Works (Bento Grid) */}
+      <section id="how" style={{ padding: "120px 24px", maxWidth: 1200, margin: "0 auto" }}>
+        <motion.div initial="hidden" whileInView="show" viewport={{ once: true, margin: "-100px" }} variants={stagger} style={{ textAlign: "center", marginBottom: 80 }}>
+          <motion.h2 variants={fadeUp} style={{ fontSize: 56, fontWeight: 700, letterSpacing: "-0.04em", margin: "0 0 16px" }}>How Boardy Works.</motion.h2>
+          <motion.p variants={fadeUp} style={{ color: "var(--ink-light)", fontSize: 21, maxWidth: 600, margin: "0 auto", letterSpacing: "-0.01em" }}>From data collection to AI-powered insight — fully automated, completely private.</motion.p>
         </motion.div>
 
-        <motion.div initial="hidden" whileInView="show" viewport={{ once: true }} variants={stagger} style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 20 }}>
+        <motion.div initial="hidden" whileInView="show" viewport={{ once: true, margin: "-100px" }} variants={stagger} style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: 24 }}>
           {[
-            { step: "01", icon: "🔗", title: "Integrate", desc: "Connect GitHub, Jira, MS 365, Slack. Employees work as usual — no behavior change." },
-            { step: "02", icon: "📡", title: "Collect", desc: "Boardy captures metadata events (commits, task updates, doc edits). Never screen recordings." },
+            { step: "01", icon: "🔗", title: "Integrate", desc: "Connect GitHub, Jira, MS 365. Employees work as usual — no behavior change." },
+            { step: "02", icon: "📡", title: "Collect", desc: "Boardy captures metadata events (commits, task updates). Never screen recordings." },
             { step: "03", icon: "🧠", title: "Analyze", desc: "AI (Gemini) processes event logs and generates role-specific summaries automatically." },
             { step: "04", icon: "📊", title: "Visualize", desc: "HR and Managers see real-time dashboards with scores, signals, and timelines." },
-            { step: "05", icon: "💬", title: "Interact", desc: "Managers chat with AI to ask deep questions about any employee's progress (RAG)." },
+            { step: "05", icon: "💬", title: "Interact", desc: "Managers chat with AI to ask deep questions about any employee's progress." },
           ].map((s, i) => (
-            <motion.div variants={fadeUp} key={i} style={{
-              background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 16,
-              padding: 28, position: "relative", overflow: "hidden",
-            }}>
-              <div style={{ fontSize: 11, color: "#8c7355", fontWeight: 800, letterSpacing: 2, marginBottom: 12 }}>STEP {s.step}</div>
-              <div style={{ fontSize: 28, marginBottom: 12 }}>{s.icon}</div>
-              <h3 style={{ fontSize: 17, fontWeight: 700, marginBottom: 8 }}>{s.title}</h3>
-              <p style={{ fontSize: 13, color: "#94a3b8", lineHeight: 1.6 }}>{s.desc}</p>
+            <motion.div variants={fadeUp} key={i} className="bento-box">
+              <div style={{ fontSize: 13, color: "var(--ink-light)", fontWeight: 600, letterSpacing: 1, marginBottom: 20 }}>STEP {s.step}</div>
+              <div style={{ fontSize: 48, marginBottom: 24 }}>{s.icon}</div>
+              <h3 style={{ fontSize: 24, fontWeight: 700, marginBottom: 12, letterSpacing: "-0.02em" }}>{s.title}</h3>
+              <p style={{ fontSize: 17, color: "var(--ink-light)", lineHeight: 1.5 }}>{s.desc}</p>
             </motion.div>
           ))}
         </motion.div>
       </section>
 
-      {/* Features */}
-      <section id="features" style={{ padding: "80px 24px", maxWidth: 1100, margin: "0 auto" }}>
-        <motion.div initial="hidden" whileInView="show" viewport={{ once: true }} variants={stagger} style={{ textAlign: "center", marginBottom: 60 }}>
-          <motion.span variants={fadeUp} style={{ color: "#a68a6b", fontSize: 12, fontWeight: 700, letterSpacing: 2 }}>CORE CAPABILITIES</motion.span>
-          <motion.h2 variants={fadeUp} style={{ fontSize: 40, fontWeight: 800, letterSpacing: -1, margin: "12px 0" }}>Built for Modern Teams</motion.h2>
+      {/* Features (Bento Grid 2) */}
+      <section id="features" style={{ padding: "120px 24px", maxWidth: 1200, margin: "0 auto" }}>
+        <motion.div initial="hidden" whileInView="show" viewport={{ once: true, margin: "-100px" }} variants={stagger} style={{ textAlign: "center", marginBottom: 80 }}>
+          <motion.h2 variants={fadeUp} style={{ fontSize: 56, fontWeight: 700, letterSpacing: "-0.04em", margin: "0 0 16px" }}>Built for Modern Teams.</motion.h2>
         </motion.div>
 
-        <motion.div initial="hidden" whileInView="show" viewport={{ once: true }} variants={stagger} style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
+        <motion.div initial="hidden" whileInView="show" viewport={{ once: true, margin: "-100px" }} variants={stagger} style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24 }}>
           {[
             { title: "Role-Based AI Summaries", desc: "HR sees well-being & milestones. Managers see technical blockers & code output. Same data, different lenses.", badge: "RAG" },
             { title: "Real-Time Event Pipeline", desc: "Webhook-driven architecture captures every commit, task update, and document change as it happens.", badge: "Event-Driven" },
             { title: "Anti-Bossware by Design", desc: "We never record screens, keystrokes, or webcams. Only structured metadata from work tools you already use.", badge: "Privacy-First" },
             { title: "Interactive AI Q&A", desc: "Managers can ask natural language questions like 'Did Maya finish the onboarding flow redesign?' and get data-backed answers.", badge: "Gemini AI" },
           ].map((f, i) => (
-            <motion.div variants={fadeUp} key={i} style={{
-              background: "linear-gradient(135deg, rgba(255,255,255,0.02), rgba(255,255,255,0.05))",
-              border: "1px solid rgba(255,255,255,0.06)", borderRadius: 16, padding: "28px 32px",
-            }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "start", marginBottom: 14 }}>
-                <h3 style={{ fontSize: 17, fontWeight: 700 }}>{f.title}</h3>
-                <span style={{ background: "rgba(140,115,85,0.15)", color: "#a8a0ff", fontSize: 10, fontWeight: 700, padding: "4px 10px", borderRadius: 6 }}>{f.badge}</span>
+            <motion.div variants={fadeUp} key={i} className="bento-box">
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "start", marginBottom: 24 }}>
+                <h3 style={{ fontSize: 28, fontWeight: 700, letterSpacing: "-0.02em", maxWidth: 280 }}>{f.title}</h3>
+                <span style={{ background: "var(--brand-color-light)", color: "var(--brand-color)", fontSize: 12, fontWeight: 700, padding: "6px 12px", borderRadius: 999 }}>{f.badge}</span>
               </div>
-              <p style={{ fontSize: 13, color: "#94a3b8", lineHeight: 1.6 }}>{f.desc}</p>
+              <p style={{ fontSize: 17, color: "var(--ink-light)", lineHeight: 1.5 }}>{f.desc}</p>
             </motion.div>
           ))}
         </motion.div>
       </section>
 
       {/* Why Boardy / Business Value */}
-      <section id="why" style={{ padding: "80px 24px", maxWidth: 900, margin: "0 auto", textAlign: "center" }}>
-        <motion.div initial="hidden" whileInView="show" viewport={{ once: true }} variants={stagger}>
-          <motion.span variants={fadeUp} style={{ color: "#a68a6b", fontSize: 12, fontWeight: 700, letterSpacing: 2 }}>BUSINESS VALUE</motion.span>
-          <motion.h2 variants={fadeUp} style={{ fontSize: 40, fontWeight: 800, letterSpacing: -1, margin: "12px 0 40px" }}>Why Companies Need Boardy</motion.h2>
+      <section id="why" style={{ padding: "120px 24px", maxWidth: 1200, margin: "0 auto", textAlign: "center" }}>
+        <motion.div initial="hidden" whileInView="show" viewport={{ once: true, margin: "-100px" }} variants={stagger}>
+          <motion.h2 variants={fadeUp} style={{ fontSize: 56, fontWeight: 700, letterSpacing: "-0.04em", margin: "0 0 80px" }}>Why Companies Need Boardy.</motion.h2>
 
-          <motion.div variants={fadeUp} style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 24 }}>
+          <motion.div variants={fadeUp} style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: 24 }}>
             {[
-              { metric: "40%", label: "Reduction in HR check-in time", detail: "Automated summaries replace manual 1-on-1 status meetings." },
+              { metric: "40%", label: "Reduction in check-ins", detail: "Automated summaries replace manual 1-on-1 status meetings." },
               { metric: "$4,700", label: "Saved per new hire", detail: "Early detection of struggling hires prevents costly bad-fit terminations." },
               { metric: "3x", label: "Faster blocker resolution", detail: "AI alerts managers to stuck tasks before they become problems." },
             ].map((v, i) => (
-              <div key={i} style={{
-                background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)",
-                borderRadius: 16, padding: "32px 24px",
-              }}>
-                <div style={{ fontSize: 36, fontWeight: 800, background: "linear-gradient(135deg,#a68a6b,#c4a484)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", marginBottom: 8 }}>{v.metric}</div>
-                <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 8 }}>{v.label}</div>
-                <p style={{ fontSize: 12, color: "#64748b", lineHeight: 1.5 }}>{v.detail}</p>
+              <div key={i} className="bento-box" style={{ display: "flex", flexDirection: "column", justifyContent: "center" }}>
+                <div style={{ fontSize: 72, fontWeight: 700, color: "var(--brand-color)", marginBottom: 16, letterSpacing: "-0.04em" }}>{v.metric}</div>
+                <div style={{ fontSize: 21, fontWeight: 600, marginBottom: 12, letterSpacing: "-0.01em" }}>{v.label}</div>
+                <p style={{ fontSize: 16, color: "var(--ink-light)", lineHeight: 1.5 }}>{v.detail}</p>
               </div>
             ))}
           </motion.div>
@@ -155,30 +158,25 @@ export default function LandingPage() {
       </section>
 
       {/* CTA */}
-      <section style={{ padding: "80px 24px 100px", textAlign: "center" }}>
-        <motion.div initial="hidden" whileInView="show" viewport={{ once: true }} variants={stagger}>
-          <motion.h2 variants={fadeUp} style={{ fontSize: 36, fontWeight: 800, letterSpacing: -1, marginBottom: 16 }}>
+      <section style={{ padding: "160px 24px", textAlign: "center" }}>
+        <motion.div initial="hidden" whileInView="show" viewport={{ once: true, margin: "-100px" }} variants={stagger}>
+          <motion.h2 variants={fadeUp} style={{ fontSize: 56, fontWeight: 700, letterSpacing: "-0.04em", marginBottom: 24 }}>
             Ready to see it in action?
           </motion.h2>
-          <motion.p variants={fadeUp} style={{ color: "#94a3b8", fontSize: 15, marginBottom: 32 }}>
+          <motion.p variants={fadeUp} style={{ color: "var(--ink-light)", fontSize: 21, marginBottom: 48, maxWidth: 600, margin: "0 auto 48px", letterSpacing: "-0.01em" }}>
             Try the live dashboard — simulate webhooks, generate AI reports, and chat with the AI assistant.
           </motion.p>
           <motion.div variants={fadeUp}>
-            <Link href="/dashboard" style={{
-              background: "linear-gradient(135deg,#a68a6b,#8c7355)", color: "#fff",
-              padding: "16px 40px", borderRadius: 12, textDecoration: "none", fontWeight: 700, fontSize: 16,
-              boxShadow: "0 10px 40px rgba(140,115,85,0.5)", display: "inline-block",
-            }}>
-              Launch Dashboard →
+            <Link href="/dashboard" className="pill-btn" style={{ background: "var(--brand-color)", color: "#fff", padding: "20px 48px", textDecoration: "none", fontWeight: 600, fontSize: 19 }}>
+              Launch Dashboard
             </Link>
           </motion.div>
         </motion.div>
       </section>
 
       {/* Footer */}
-      <footer style={{ borderTop: "1px solid rgba(255,255,255,0.06)", padding: "32px 40px", display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 12, color: "#475569" }}>
-        <span>© 2024 Boardy · Built for AI in Business Hackathon</span>
-        <span>Powered by Google Gemini · Next.js · SQLite</span>
+      <footer style={{ borderTop: "1px solid var(--border-color)", background: "var(--bg-panel)", padding: "40px 60px", display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 14, color: "var(--ink-light)", fontWeight: 500 }}>
+        <span>© 2026 Boardy · Built for AI in Business Hackathon</span>
       </footer>
     </div>
   );
