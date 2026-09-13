@@ -42,11 +42,9 @@ export default function LandingPage() {
         borderBottom: scrolled ? "1px solid var(--border-color)" : "1px solid transparent",
         transition: "all 0.3s ease",
       }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <div style={{ width: 34, height: 34, borderRadius: 10, background: "var(--brand-color)", display: "grid", placeItems: "center", color: "#fff", fontWeight: 800, fontSize: 16 }}>
-            ✨
-          </div>
-          <span style={{ fontWeight: 800, fontSize: 20, letterSpacing: -0.5 }}>Boardy</span>
+        <div style={{ display: "flex", alignItems: "baseline" }}>
+          <span style={{ fontWeight: 800, fontSize: 22, letterSpacing: -1 }}>Boardy</span>
+          <span className="metallic-text" style={{ fontWeight: 900, fontSize: 32, lineHeight: 0.5 }}>.</span>
         </div>
         <div style={{ display: "flex", gap: 32, alignItems: "center", fontSize: 14, fontWeight: 600 }}>
           <a href="#how" style={{ color: "var(--ink-light)", textDecoration: "none", transition: "color 0.2s" }} onMouseOver={(e) => e.currentTarget.style.color = "var(--ink)"} onMouseOut={(e) => e.currentTarget.style.color = "var(--ink-light)"}>How It Works</a>
@@ -63,10 +61,6 @@ export default function LandingPage() {
         minHeight: "100vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
         textAlign: "center", padding: "120px 24px 80px", position: "relative",
       }}>
-        
-        <motion.div variants={fadeUp} style={{ background: "var(--brand-color-light)", borderRadius: 980, padding: "8px 20px", fontSize: 13, fontWeight: 600, color: "var(--brand-color)", marginBottom: 24, display: "inline-flex", gap: 8, alignItems: "center" }}>
-          ⚡ Event-Driven AI Onboarding Copilot
-        </motion.div>
 
         <motion.h1 variants={fadeUp} style={{ fontSize: "clamp(46px, 8vw, 96px)", fontWeight: 700, letterSpacing: "-0.04em", lineHeight: 1.05, maxWidth: 1000, margin: "0 0 24px" }}>
           Stop guessing how your <br />
