@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
-import { Icon } from "./components/Icon";
 
 const fadeUp = { hidden: { opacity: 0, y: 30 }, show: { opacity: 1, y: 0, transition: { duration: 0.6 } } };
 const stagger = { show: { transition: { staggerChildren: 0.15 } } };
@@ -47,7 +46,7 @@ export default function LandingPage() {
       }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <div style={{ width: 34, height: 34, borderRadius: 10, background: "var(--brand-color)", display: "grid", placeItems: "center", color: "#fff", fontWeight: 800, fontSize: 16 }}>
-            <Icon name="sparkles" size={18} />
+            ✨
           </div>
           <span style={{ fontWeight: 800, fontSize: 20, letterSpacing: -0.5 }}>Boardy</span>
         </div>
@@ -70,7 +69,7 @@ export default function LandingPage() {
         <div className="ambient-glow" style={{ bottom: -200, right: -200, width: 800, height: 800, position: 'absolute' }} />
         
         <motion.div variants={fadeUp} style={{ background: "var(--brand-color-light)", border: "1px solid var(--border-color)", borderRadius: 99, padding: "8px 20px", fontSize: 13, fontWeight: 700, color: "var(--brand-color)", marginBottom: 24, display: "inline-flex", gap: 8, alignItems: "center", position: "relative", zIndex: 10 }}>
-          <Icon name="zap" size={16} /> Event-Driven AI Onboarding Copilot
+          ⚡ Event-Driven AI Onboarding Copilot
         </motion.div>
 
         <motion.h1 variants={fadeUp} style={{ fontSize: "clamp(42px, 7vw, 76px)", fontWeight: 800, letterSpacing: -2.5, lineHeight: 1.1, maxWidth: 900, margin: "0 0 24px", position: "relative", zIndex: 10 }}>
@@ -84,7 +83,7 @@ export default function LandingPage() {
 
         <motion.div variants={fadeUp} style={{ display: "flex", gap: 16, position: "relative", zIndex: 10 }}>
           <Link href="/dashboard" style={{ background: "var(--brand-color)", color: "#fff", padding: "18px 40px", borderRadius: 12, textDecoration: "none", fontWeight: 700, fontSize: 17, boxShadow: "0 8px 30px rgba(0,0,0,0.12)", display: "flex", gap: 8, alignItems: "center", transition: "transform 0.2s ease" }} onMouseOver={(e) => e.currentTarget.style.transform = "translateY(-2px)"} onMouseOut={(e) => e.currentTarget.style.transform = "translateY(0)"}>
-            Try the Live Demo <Icon name="arrow" size={18} />
+            Try the Live Demo →
           </Link>
           <a href="#how" style={{ background: "var(--bg-panel)", border: "1px solid var(--border-color)", color: "var(--ink)", padding: "18px 40px", borderRadius: 12, textDecoration: "none", fontWeight: 700, fontSize: 17, boxShadow: "0 4px 15px rgba(0,0,0,0.03)", transition: "transform 0.2s ease" }} onMouseOver={(e) => e.currentTarget.style.transform = "translateY(-2px)"} onMouseOut={(e) => e.currentTarget.style.transform = "translateY(0)"}>
             See How It Works
@@ -189,7 +188,7 @@ export default function LandingPage() {
               padding: "20px 48px", borderRadius: 12, textDecoration: "none", fontWeight: 800, fontSize: 18,
               boxShadow: "0 10px 40px rgba(0,0,0,0.15)", display: "inline-flex", gap: 10, alignItems: "center", transition: "transform 0.2s ease"
             }} onMouseOver={(e) => e.currentTarget.style.transform = "translateY(-3px)"} onMouseOut={(e) => e.currentTarget.style.transform = "translateY(0)"}>
-              Launch Dashboard <Icon name="arrow" size={20} />
+              Launch Dashboard →
             </Link>
           </motion.div>
         </motion.div>
